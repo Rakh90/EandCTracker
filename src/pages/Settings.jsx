@@ -5,11 +5,27 @@ import { exportAllAsJSON, exportAllCSVZipish, downloadFile, importJSON } from '.
 import { todayStr } from '../lib/dates'
 
 export default function Settings() {
-  const [reminderTime, setReminderTime] = useSetting('benchmarkReminderTime', '')
+  const [reminderTimes, setReminderTimes] = useSetting('benchmarkReminderTimes', ['09:00'])
   const [apiKey, setApiKey] = useSetting('anthropicApiKey', '')
   const [wipeStep, setWipeStep] = useState(0)
   const [status, setStatus] = useState('')
   const fileInputRef = useRef(null)
+
+  const times = reminderTimes || []
+
+  function updateReminderTime(index, value) {
+    const next = [...times]
+    next[index] = value
+    setReminderTimes(next)
+  }
+
+  function addReminderTime() {
+    setReminderTimes([...times, '09:00'])
+  }
+
+  function removeReminderTime(index) {
+    setReminderTimes(times.filter((_, i) => i !== index))
+  }
 
   async function handleExportJSON() {
     const json = await exportAllAsJSON()
@@ -51,9 +67,17 @@ export default function Settings() {
       </div>
 
       <div className="card">
-        <h3>Benchmark reminder</h3>
-        <label>Reminder time</label>
-        <input type="time" value={reminderTime || ''} onChange={(e) => setReminderTime(e.target.value)} style={{ marginTop: 6 }} />
+        <h3>Benchmark reminders</h3>
+        <p className="muted" style={{ marginTop: -8, marginBottom: 12 }}>
+          The benchmark is meant to be run multiple times a day — add a reminder for each time you want a nudge.
+        </p>
+        {times.map((t, i) => (
+          <div key={i} className="field-row" style={{ marginBottom: 8 }}>
+            <input type="time" value={t} onChange={(e) => updateReminderTime(i, e.target.value)} />
+            <button type="button" onClick={() => removeReminderTime(i)}>Remove</button>
+          </div>
+        ))}
+        <button type="button" onClick={addReminderTime}>Add reminder</button>
       </div>
 
       <div className="card">

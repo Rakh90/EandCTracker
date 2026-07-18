@@ -1,4 +1,8 @@
-export default function ChipGroup({ label, options, value, onChange, multi = false }) {
+import { useState } from 'react'
+import HintToggle from './HintToggle'
+
+export default function ChipGroup({ label, options, value, onChange, multi = false, hint }) {
+  const [showHint, setShowHint] = useState(false)
   const selected = multi ? (value || []) : value
   function toggle(opt) {
     if (multi) {
@@ -12,7 +16,12 @@ export default function ChipGroup({ label, options, value, onChange, multi = fal
   }
   return (
     <div className="field">
-      {label && <label>{label}</label>}
+      {label && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <label>{label}</label>
+          <HintToggle hint={hint} open={showHint} onToggle={() => setShowHint((s) => !s)} />
+        </div>
+      )}
       <div className="chip-group">
         {options.map((opt) => {
           const isSelected = multi ? selected.includes(opt) : selected === opt
@@ -29,6 +38,7 @@ export default function ChipGroup({ label, options, value, onChange, multi = fal
           )
         })}
       </div>
+      {showHint && hint && <p className="muted" style={{ marginTop: 6, marginBottom: 0 }}>{hint}</p>}
     </div>
   )
 }

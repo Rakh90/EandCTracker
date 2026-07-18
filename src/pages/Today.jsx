@@ -4,6 +4,8 @@ import { db } from '../db/db'
 import { todayStr, addDays } from '../lib/dates'
 import { lastNDates } from '../lib/dates'
 import { mean } from '../lib/stats'
+import { useDailyLog } from '../hooks/useDailyLog'
+import Stepper from '../components/ui/Stepper'
 import { IconSun, IconCloudSun, IconMoon, IconBrain, IconCheck, IconChevron } from '../components/ui/Icons'
 
 function isAnyCheckInDone(log) {
@@ -36,7 +38,9 @@ function isMorningDone(log) {
 
 function isMiddayDone(log) {
   if (!log) return false
-  return ['focus_minutes', 'midday_fog', 'memory_slips', 'stress_midday', 'caffeine_mg', 'water_total']
+  // caffeine_mg/water_total are excluded here since they're now logged from any
+  // of the three check-ins, not just midday — they can't signal this section alone.
+  return ['focus_minutes', 'midday_fog', 'memory_slips', 'stress_midday', 'processing_speed']
     .some((k) => log[k] !== null && log[k] !== undefined)
 }
 
@@ -52,6 +56,7 @@ export default function Today() {
   const priorDates = baselineDates.slice(0, 7)
 
   const todayLog = useLiveQuery(() => db.daily_log.get(date), [date])
+  const { patch } = useDailyLog(date)
   const allLogs = useLiveQuery(() => db.daily_log.toArray(), [])
   const priorLogs = useLiveQuery(
     () => db.daily_log.where('date').anyOf(priorDates).toArray(),
@@ -109,17 +114,23 @@ export default function Today() {
           {streak > 0 && <span className="mono muted">{streak}-day streak</span>}
         </div>
         {[
-          { to: '/checkin/morning', label: 'Morning', done: morningDone, Icon: IconSun },
-          { to: '/checkin/midday', label: 'Midday', done: middayDone, Icon: IconCloudSun },
-          { to: '/checkin/evening', label: 'Evening', done: eveningDone, Icon: IconMoon },
-          { to: '/benchmark', label: 'Benchmark', done: benchmarkDone, Icon: IconBrain },
-        ].map(({ to, label, done, Icon }) => (
+          { to: '/checkin/morning', label: 'Morning', done: morningDone, badge: morningDone ? 'done' : 'pending', Icon: IconSun },
+          { to: '/checkin/midday', label: 'Midday', done: middayDone, badge: middayDone ? 'done' : 'pending', Icon: IconCloudSun },
+          { to: '/checkin/evening', label: 'Evening', done: eveningDone, badge: eveningDone ? 'done' : 'pending', Icon: IconMoon },
+          {
+            to: '/benchmark',
+            label: 'Benchmark',
+            done: benchmarkDone,
+            badge: benchmarkDone ? `${benchmarkToday.length}x today` : 'pending',
+            Icon: IconBrain,
+          },
+        ].map(({ to, label, done, badge, Icon }) => (
           <Link key={to} to={to} className="list-row">
             <span className={`row-icon${done ? ' done' : ''}`}>
               {done ? <IconCheck width={18} height={18} strokeWidth={2.2} /> : <Icon width={18} height={18} />}
             </span>
             <span className="row-label">{label}</span>
-            <span className={`badge ${done ? 'done' : 'pending'}`}>{done ? 'done' : 'pending'}</span>
+            <span className={`badge ${done ? 'done' : 'pending'}`}>{badge}</span>
             <IconChevron width={16} height={16} className="row-chevron" />
           </Link>
         ))}
@@ -156,6 +167,20 @@ export default function Today() {
             <div className="muted">vs {fmt(priorComposite)}</div>
           </div>
         </div>
+      </div>
+
+      <div className="card">
+        <h3>Creatine</h3>
+        <p className="muted" style={{ marginTop: -8, marginBottom: 12 }}>Not tied to a time of day — log it whenever you take it.</p>
+        <Stepper
+          label="Grams today"
+          value={todayLog?.creatine_g ?? 0}
+          onChange={(v) => patch({ creatine_g: v })}
+          min={0}
+          max={20}
+          step={1}
+          unit="g"
+        />
       </div>
     </div>
   )

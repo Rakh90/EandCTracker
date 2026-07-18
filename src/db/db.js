@@ -19,7 +19,7 @@ export const DAILY_LOG_FIELDS = [
   'symptom_headache', 'symptom_soreness', 'symptom_stomach', 'symptom_other',
   'exec_tasks', 'exec_problems', 'exec_organization',
   'pm_phys_energy', 'pm_mental_energy', 'pm_mood', 'stress_avg',
-  'post_meal_crash', 'crash_delay_min', 'notes',
+  'post_meal_crash', 'crash_delay_min', 'notes', 'creatine_g',
 ]
 
 export const BENCHMARK_RUN_FIELDS = [
