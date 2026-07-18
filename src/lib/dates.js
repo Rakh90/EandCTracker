@@ -5,6 +5,17 @@ export function todayStr(d = new Date()) {
   return `${y}-${m}-${day}`
 }
 
+// The "logical" day for logging purposes runs 4am-to-4am instead of
+// midnight-to-midnight, so a late night (up past midnight but before dawn)
+// still counts toward the day you were actually awake for, not a new one.
+export const DAY_START_HOUR = 4
+
+export function logicalDateStr(d = new Date()) {
+  const shifted = new Date(d)
+  if (shifted.getHours() < DAY_START_HOUR) shifted.setDate(shifted.getDate() - 1)
+  return todayStr(shifted)
+}
+
 export function addDays(dateStr, n) {
   const [y, m, d] = dateStr.split('-').map(Number)
   const dt = new Date(y, m - 1, d)
@@ -20,10 +31,19 @@ export function daysBetween(startStr, endStr) {
   return Math.round((b - a) / 86400000)
 }
 
-export function lastNDates(n, endDateStr = todayStr()) {
+export function lastNDates(n, endDateStr = logicalDateStr()) {
   const out = []
   for (let i = n - 1; i >= 0; i--) out.push(addDays(endDateStr, -i))
   return out
+}
+
+// Sorts clock times chronologically within a logical (4am-to-4am) day: a
+// time before DAY_START_HOUR belongs to the tail end of the day that started
+// the previous calendar morning, so it must sort after 23:59, not before 00:00.
+export function logicalMinutes(hhmm) {
+  const [h, m] = hhmm.split(':').map(Number)
+  const adjH = h < DAY_START_HOUR ? h + 24 : h
+  return adjH * 60 + m
 }
 
 export function formatDisplayDate(dateStr) {
@@ -35,6 +55,22 @@ export function nowTimeHHMM(d = new Date()) {
   const h = String(d.getHours()).padStart(2, '0')
   const m = String(d.getMinutes()).padStart(2, '0')
   return `${h}:${m}`
+}
+
+// Derives hours slept from clock-time bed/wake inputs. If bed-time is
+// numerically at or after wake-time (e.g. bed 23:00, wake 07:00), the
+// bedtime is assumed to be the previous evening and wraps past midnight;
+// otherwise both times are treated as the same overnight stretch (e.g. bed
+// 00:30, wake 07:00 = 6.5h) without needing a separate calendar date.
+export function sleepHoursFromTimes(bedTime, wakeTime) {
+  if (!bedTime || !wakeTime) return null
+  const [bh, bm] = bedTime.split(':').map(Number)
+  const [wh, wm] = wakeTime.split(':').map(Number)
+  const bedMin = bh * 60 + bm
+  let wakeMin = wh * 60 + wm
+  if (bedMin === wakeMin) return 0
+  if (bedMin > wakeMin) wakeMin += 24 * 60
+  return Math.round(((wakeMin - bedMin) / 60) * 4) / 4
 }
 
 export function formatTime12h(hhmm) {

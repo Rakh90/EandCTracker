@@ -1,20 +1,15 @@
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
-import { todayStr, addDays, nowTimeHHMM, formatTime12h, daysBetween } from '../lib/dates'
+import { logicalDateStr, addDays, nowTimeHHMM, formatTime12h, daysBetween } from '../lib/dates'
 import { lastNDates } from '../lib/dates'
 import { mean } from '../lib/stats'
-import { useCreatineForDate, useDailyLog } from '../hooks/useDailyLog'
+import { useCreatineForDate, useMovementForDate } from '../hooks/useDailyLog'
 import { useSetting } from '../hooks/useSetting'
 import { labelFor } from '../lib/metrics'
 import CreatineLog from '../components/CreatineLog'
-import ChipGroup from '../components/ui/ChipGroup'
-import Stepper from '../components/ui/Stepper'
-import Slider from '../components/ui/Slider'
-import { DEFS } from '../lib/definitions'
+import MovementLog from '../components/MovementLog'
 import { IconSun, IconCloudSun, IconMoon, IconBrain, IconCheck, IconChevron, IconClock } from '../components/ui/Icons'
-
-const MOVEMENT_TYPES = ['Walk', 'Run', 'Gym', 'Yoga', 'Sports', 'None']
 
 function isAnyCheckInDone(log) {
   if (!log) return false
@@ -59,13 +54,13 @@ function isEveningDone(log) {
 }
 
 export default function Today() {
-  const date = todayStr()
-  const baselineDates = lastNDates(8, date) // includes today as last entry
-  const priorDates = baselineDates.slice(0, 7)
+  const date = logicalDateStr()
+  const baselineDates = lastNDates(31, date) // includes today as last entry
+  const priorDates = baselineDates.slice(0, 30)
 
-  const { log: editableLog, patch } = useDailyLog(date)
   const todayLog = useLiveQuery(() => db.daily_log.get(date), [date])
   const creatineEntries = useCreatineForDate(date)
+  const movementEntries = useMovementForDate(date)
   const [reminderTimes] = useSetting('benchmarkReminderTimes', ['09:00'])
   const allLogs = useLiveQuery(() => db.daily_log.toArray(), [])
   const priorLogs = useLiveQuery(
@@ -199,7 +194,7 @@ export default function Today() {
       </div>
 
       <div className="card">
-        <h3>Today vs 7-day baseline</h3>
+        <h3>Today vs 30-day baseline</h3>
         <div className="stat-row">
           <div className="stat-tile">
             <div className="num">{fmt(todayMental)}</div>
@@ -251,10 +246,8 @@ export default function Today() {
 
       <div className="card">
         <h3>Movement</h3>
-        <p className="muted" style={{ marginTop: -8, marginBottom: 12 }}>Not tied to a time of day — log it whenever it happens.</p>
-        <ChipGroup label="Type" options={MOVEMENT_TYPES} value={editableLog.movement_type} onChange={(v) => patch({ movement_type: v })} />
-        <Stepper label="Minutes" value={editableLog.movement_min} onChange={(v) => patch({ movement_min: v })} min={0} max={300} step={5} />
-        <Slider label="Intensity" value={editableLog.movement_intensity} onChange={(v) => patch({ movement_intensity: v })} min={1} max={10} hint={DEFS.movement_intensity} />
+        <p className="muted" style={{ marginTop: -8, marginBottom: 12 }}>Not tied to a time of day — log each session as it happens.</p>
+        <MovementLog date={date} entries={movementEntries} />
       </div>
 
       <div className="card">

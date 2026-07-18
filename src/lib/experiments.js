@@ -1,5 +1,5 @@
 import { mean } from './stats'
-import { addDays, daysBetween, todayStr } from './dates'
+import { addDays, daysBetween, logicalDateStr } from './dates'
 import { INPUT_VARS, OUTPUT_VARS } from './metrics'
 
 // Concrete, direction-aware instructions for running an experiment.
@@ -87,7 +87,7 @@ export function backfillLegacyExperiment(experiment) {
 // single-subject, no-control-group setup can get to "did this actually move."
 export function computeExperimentResult(experiment, series) {
   const start = experiment.start_date
-  const end = experiment.end_date || todayStr()
+  const end = experiment.end_date || logicalDateStr()
   const windowDays = daysBetween(start, end) + 1
   const beforeEnd = addDays(start, -1)
   const beforeStart = addDays(start, -windowDays)
@@ -111,10 +111,22 @@ export function computeExperimentResult(experiment, series) {
   }
 }
 
-export function summarizeExperimentResult(experiment, result, outputLabel) {
+// outputVar carries higherIsBetter so the objective before/after delta can be
+// checked against the user's own subjective verdict — e.g. flag it when
+// someone says "Worked" but the 14-day data actually moved the wrong way.
+export function summarizeExperimentResult(experiment, result, outputVar, verdict) {
+  const outputLabel = outputVar?.label || experiment.target_output
   if (result.n_before < 3 || result.n_after < 3) {
     return `Not enough data on both sides yet to compare (${result.n_before} days before, ${result.n_after} days during/after).`
   }
   const dir = result.delta > 0 ? 'up' : result.delta < 0 ? 'down' : 'unchanged'
-  return `${outputLabel} averaged ${result.beforeMean.toFixed(1)} in the ${result.windowDays} days before, vs ${result.afterMean.toFixed(1)} during/after — ${dir}${result.delta !== 0 ? ` by ${Math.abs(result.delta).toFixed(1)}` : ''} (n=${result.n_before} before, ${result.n_after} during/after).`
+  let summary = `${outputLabel} averaged ${result.beforeMean.toFixed(1)} in the ${result.windowDays} days before, vs ${result.afterMean.toFixed(1)} during/after — ${dir}${result.delta !== 0 ? ` by ${Math.abs(result.delta).toFixed(1)}` : ''} (n=${result.n_before} before, ${result.n_after} during/after).`
+  if (verdict && verdict !== 'Inconclusive' && result.delta !== 0 && outputVar) {
+    const movedBetter = (result.delta > 0) === outputVar.higherIsBetter
+    const agrees = movedBetter === (verdict === 'Worked')
+    summary += agrees
+      ? ` That matches what you noted (${verdict}).`
+      : ` That doesn't clearly match what you noted (${verdict}) — worth a second look before drawing a conclusion.`
+  }
+  return summary
 }

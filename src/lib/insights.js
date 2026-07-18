@@ -106,7 +106,7 @@ export function getCorrelationCards(series) {
           r,
           n,
           strength,
-          text: `On days with higher ${input.label.toLowerCase()}, ${output.label.toLowerCase()} tends to be ${tendency} ${lagText} — a ${strength} relationship (r=${r.toFixed(2)} across ${n} days). Correlation, not proof of cause.`,
+          text: `On days with higher ${input.label.toLowerCase()}, ${output.label.toLowerCase()} tends to be ${tendency} ${lagText} — a ${strength} relationship (r=${r.toFixed(2)} across ${n} days).`,
         })
       }
     }
@@ -151,7 +151,7 @@ export function buildSummaryReport(series, correlationCards, experiments) {
     avgFog: avgOf('fog'),
     bestDay,
     worstDay,
-    topCorrelations: correlationCards.slice(0, 3),
+    topCorrelations: correlationCards.slice(0, 6),
     experimentStats,
   }
 }

@@ -18,3 +18,8 @@ export function useCreatineForDate(date) {
   const entries = useLiveQuery(() => db.creatine_intakes.where('date').equals(date).toArray(), [date])
   return entries || []
 }
+
+export function useMovementForDate(date) {
+  const entries = useLiveQuery(() => db.movement_logs.where('date').equals(date).toArray(), [date])
+  return entries || []
+}

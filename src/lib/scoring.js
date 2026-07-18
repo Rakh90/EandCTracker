@@ -1,5 +1,5 @@
 export const SPAN_MIN = 3
-export const SPAN_MAX = 8
+export const SPAN_MAX = 10
 export const RT_BEST_MS = 200
 export const RT_WORST_MS = 600
 export const SPRINT_NET_MAX = 30

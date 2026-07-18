@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { SPAN_MIN, SPAN_MAX } from '../../lib/scoring'
 
-const GRID_SIZE = 9
-const SHOW_MS = 600
-const GAP_MS = 250
+const GRID_SIZE = 12
+const SHOW_MS = 450
+const GAP_MS = 180
 
 function randomSequence(length) {
   const seq = []

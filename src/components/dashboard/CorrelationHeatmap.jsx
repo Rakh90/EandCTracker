@@ -51,13 +51,18 @@ export default function CorrelationHeatmap({ series }) {
         Every input crossed against every output, in one view. Bigger, more saturated bubbles are stronger
         relationships; blue moves together, red moves opposite; faint dashed circles mean too little data yet.
       </p>
-      <div className="chip-group" style={{ marginBottom: 10 }}>
+      <div className="chip-group" style={{ marginBottom: 4 }}>
         {[0, 1].map((l) => (
           <div key={l} className={`chip${lag === l ? ' selected' : ''}`} role="button" tabIndex={0} onClick={() => setLag(l)}>
             lag {l}
           </div>
         ))}
       </div>
+      <p className="muted" style={{ marginTop: 0, marginBottom: 10, fontSize: 12 }}>
+        {lag === 0
+          ? 'Lag 0: same-day effect — does today\'s input line up with today\'s output.'
+          : 'Lag 1: next-day effect — does today\'s input line up with tomorrow\'s output (e.g. a delayed or building effect, like creatine loading).'}
+      </p>
 
       {!tableView ? (
         <div style={{ overflowX: 'auto' }}>

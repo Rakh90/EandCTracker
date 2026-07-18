@@ -1,16 +1,18 @@
 import { useState } from 'react'
 import { addCreatineIntake } from '../db/db'
-import { nowTimeHHMM, formatTime12h } from '../lib/dates'
+import { nowTimeHHMM, formatTime12h, logicalMinutes } from '../lib/dates'
+import TimeInput from './ui/TimeInput'
 
 export default function CreatineLog({ date, entries }) {
   const [grams, setGrams] = useState('5')
+  const [time, setTime] = useState(nowTimeHHMM())
 
   const total = entries.reduce((sum, e) => sum + (e.grams || 0), 0)
 
   async function submit() {
     const n = Number(grams)
     if (!n) return
-    await addCreatineIntake({ date, time: nowTimeHHMM(), grams: n })
+    await addCreatineIntake({ date, time: time || nowTimeHHMM(), grams: n })
   }
 
   return (
@@ -29,11 +31,12 @@ export default function CreatineLog({ date, entries }) {
         <button type="button" className="primary" onClick={submit} disabled={!grams}>Submit</button>
         <span className="mono muted" style={{ marginLeft: 'auto' }}>{total}g today</span>
       </div>
+      <TimeInput label="Time (for logging a dose late)" value={time} onChange={setTime} />
       {entries.length > 0 && (
         <ul style={{ margin: '10px 0 0', paddingLeft: 18, fontSize: 14 }}>
           {entries
             .slice()
-            .sort((a, b) => (a.time < b.time ? -1 : a.time > b.time ? 1 : 0))
+            .sort((a, b) => logicalMinutes(a.time) - logicalMinutes(b.time))
             .map((e) => (
               <li key={e.id}>
                 <span className="mono">{formatTime12h(e.time)}</span> — {e.grams}g

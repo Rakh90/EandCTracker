@@ -1,7 +1,7 @@
 import Papa from 'papaparse'
 import { db } from '../db/db'
 
-const TABLES = ['daily_log', 'benchmark_runs', 'meals', 'experiments', 'creatine_intakes']
+const TABLES = ['daily_log', 'benchmark_runs', 'meals', 'experiments', 'creatine_intakes', 'movement_logs']
 
 export async function exportAllAsJSON() {
   const data = {}
@@ -38,7 +38,7 @@ export async function exportAllCSVZipish() {
 
 export async function importJSON(jsonText) {
   const parsed = JSON.parse(jsonText)
-  await db.transaction('rw', db.daily_log, db.benchmark_runs, db.meals, db.experiments, db.creatine_intakes, async () => {
+  await db.transaction('rw', db.daily_log, db.benchmark_runs, db.meals, db.experiments, db.creatine_intakes, db.movement_logs, async () => {
     for (const t of TABLES) {
       if (!Array.isArray(parsed[t])) continue
       for (const row of parsed[t]) {

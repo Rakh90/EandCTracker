@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { todayStr } from '../lib/dates'
+import { logicalDateStr } from '../lib/dates'
 import { useDailyLog, useMealsForDate } from '../hooks/useDailyLog'
 import Slider from '../components/ui/Slider'
 import Stepper from '../components/ui/Stepper'
@@ -17,7 +17,7 @@ const SYMPTOMS = [
 const CRASH_OPTIONS = ['Yes', 'No']
 
 export default function CheckInEvening() {
-  const date = todayStr()
+  const date = logicalDateStr()
   const { log, patch } = useDailyLog(date)
   const meals = useMealsForDate(date)
   const navigate = useNavigate()

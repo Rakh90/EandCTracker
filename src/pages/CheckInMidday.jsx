@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { todayStr } from '../lib/dates'
+import { logicalDateStr } from '../lib/dates'
 import { useDailyLog, useMealsForDate } from '../hooks/useDailyLog'
 import { db } from '../db/db'
 import Slider from '../components/ui/Slider'
@@ -14,7 +14,7 @@ import { DEFS } from '../lib/definitions'
 const SPEED_LABELS = { Slower: -1, Normal: 0, Faster: 1 }
 
 export default function CheckInMidday() {
-  const date = todayStr()
+  const date = logicalDateStr()
   const { log, patch } = useDailyLog(date)
   const meals = useMealsForDate(date)
   const navigate = useNavigate()

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { median } from '../../lib/scoring'
 
-const TRIALS = 5
+const TRIALS = 6
 
 export default function ReactionTest({ onComplete }) {
   const [trial, setTrial] = useState(1)
@@ -16,7 +16,7 @@ export default function ReactionTest({ onComplete }) {
 
   function startTrial() {
     setPhase('waiting')
-    const delay = 1000 + Math.random() * 2000
+    const delay = 800 + Math.random() * 2400
     timeoutRef.current = setTimeout(() => {
       goAtRef.current = performance.now()
       setPhase('go')

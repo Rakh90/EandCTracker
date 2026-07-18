@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
-const SYMBOLS = ['△', '○', '□', '◇', '☆', '✦']
-const DURATION_S = 30
+const SYMBOLS = ['△', '○', '□', '◇', '☆', '✦', '◎', '▽', '✚']
+const DURATION_S = 25
 
 function randomPair() {
   const a = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]

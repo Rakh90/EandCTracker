@@ -14,8 +14,12 @@ db.version(2).stores({
   creatine_intakes: '++id, date',
 })
 
+db.version(3).stores({
+  movement_logs: '++id, date',
+})
+
 export const DAILY_LOG_FIELDS = [
-  'date', 'sleep_hours', 'sleep_quality', 'wake_state', 'night_wakings',
+  'date', 'bed_time', 'wake_time', 'sleep_hours', 'sleep_quality', 'wake_state', 'night_wakings',
   'am_phys_energy', 'am_mental_energy', 'am_mood', 'am_fog',
   'focus_minutes', 'midday_fog', 'memory_slips', 'processing_speed', 'stress_midday',
   'caffeine_mg', 'water_total',
@@ -35,6 +39,8 @@ export const BENCHMARK_RUN_FIELDS = [
 export const MEAL_FIELDS = ['id', 'date', 'time', 'description', 'energy_effect', 'effect_delay_min']
 
 export const CREATINE_FIELDS = ['id', 'date', 'time', 'grams']
+
+export const MOVEMENT_FIELDS = ['id', 'date', 'time', 'movement_type', 'minutes', 'intensity']
 
 export const EXPERIMENT_FIELDS = [
   'id', 'start_date', 'end_date', 'variable_changed', 'target_output', 'target_days',
@@ -63,17 +69,22 @@ export async function addCreatineIntake(entry) {
   return db.creatine_intakes.add(entry)
 }
 
+export async function addMovementLog(entry) {
+  return db.movement_logs.add(entry)
+}
+
 export async function addBenchmarkRun(run) {
   return db.benchmark_runs.add(run)
 }
 
 export async function wipeAllData() {
-  await db.transaction('rw', db.daily_log, db.benchmark_runs, db.meals, db.experiments, db.creatine_intakes, async () => {
+  await db.transaction('rw', db.daily_log, db.benchmark_runs, db.meals, db.experiments, db.creatine_intakes, db.movement_logs, async () => {
     await db.daily_log.clear()
     await db.benchmark_runs.clear()
     await db.meals.clear()
     await db.experiments.clear()
     await db.creatine_intakes.clear()
+    await db.movement_logs.clear()
   })
 }
 

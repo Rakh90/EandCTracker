@@ -6,7 +6,7 @@ import ReactionTest from '../components/benchmark/ReactionTest'
 import SymbolSprint from '../components/benchmark/SymbolSprint'
 import TodayResultsChart from '../components/benchmark/TodayResultsChart'
 import ChipGroup from '../components/ui/ChipGroup'
-import { todayStr } from '../lib/dates'
+import { logicalDateStr } from '../lib/dates'
 import { db, addBenchmarkRun } from '../db/db'
 import { spanToScore, rtToScore, sprintToScore, compositeScore } from '../lib/scoring'
 
@@ -17,7 +17,7 @@ export default function Benchmark() {
   const [step, setStep] = useState('intro')
   const [context, setContext] = useState('scheduled')
   const [results, setResults] = useState({})
-  const todayRuns = useLiveQuery(() => db.benchmark_runs.where('date').equals(todayStr()).toArray(), [])
+  const todayRuns = useLiveQuery(() => db.benchmark_runs.where('date').equals(logicalDateStr()).toArray(), [])
 
   async function handleSpanComplete({ span }) {
     setResults((r) => ({ ...r, span }))
@@ -36,7 +36,7 @@ export default function Benchmark() {
     const sprint_score = sprintToScore(sprint_net)
     const composite = compositeScore({ span_score, rt_score, sprint_score })
     const run = {
-      date: todayStr(),
+      date: logicalDateStr(),
       timestamp: new Date().toISOString(),
       context,
       span: merged.span,

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
-import { buildDailySeries, getCalibrationDates, filterCalibration, labelFor } from '../lib/metrics'
+import { buildDailySeries, getCalibrationDates, filterCalibration, labelFor, OUTPUT_VARS } from '../lib/metrics'
 import { getThresholdFlags, getCorrelationCards, getWeeklyRecommendation, buildSummaryReport } from '../lib/insights'
 import { computeExperimentResult, summarizeExperimentResult, backfillLegacyExperiment } from '../lib/experiments'
-import { todayStr, daysBetween } from '../lib/dates'
+import { logicalDateStr, daysBetween } from '../lib/dates'
 import { useSetting } from '../hooks/useSetting'
 import { generateWeeklyReview } from '../lib/aiReview'
 import CorrelationScatter from '../components/dashboard/CorrelationScatter'
@@ -17,6 +17,8 @@ export default function Insights() {
   const logs = useLiveQuery(() => db.daily_log.toArray(), []) ?? EMPTY
   const runs = useLiveQuery(() => db.benchmark_runs.toArray(), []) ?? EMPTY
   const experiments = useLiveQuery(() => db.experiments.toArray(), []) ?? EMPTY
+  const creatineIntakes = useLiveQuery(() => db.creatine_intakes.toArray(), []) ?? EMPTY
+  const movementLogs = useLiveQuery(() => db.movement_logs.toArray(), []) ?? EMPTY
   const [apiKey] = useSetting('anthropicApiKey', '')
   const [review, setReview] = useState('')
   const [reviewStatus, setReviewStatus] = useState('idle') // idle | loading | error
@@ -24,7 +26,10 @@ export default function Insights() {
   const [verdictDraft, setVerdictDraft] = useState(null)
   const [outcomeDraft, setOutcomeDraft] = useState('')
 
-  const fullSeries = useMemo(() => buildDailySeries(logs, runs), [logs, runs])
+  const fullSeries = useMemo(
+    () => buildDailySeries(logs, runs, creatineIntakes, movementLogs),
+    [logs, runs, creatineIntakes, movementLogs]
+  )
   const calibrationDates = useMemo(() => getCalibrationDates(runs), [runs])
   const correlationSeries = useMemo(
     () => filterCalibration(fullSeries, calibrationDates, true),
@@ -62,7 +67,7 @@ export default function Insights() {
 
   async function acceptRecommendation() {
     if (!recommendation) return
-    const today = todayStr()
+    const today = logicalDateStr()
     await db.experiments.add({
       start_date: today,
       end_date: null,
@@ -123,10 +128,11 @@ export default function Insights() {
     const result = experiment.target_output
       ? computeExperimentResult(experiment, fullSeries)
       : null
-    const computedSummary = result ? summarizeExperimentResult(experiment, result, labelFor(experiment.target_output)) : ''
+    const outputVar = OUTPUT_VARS.find((v) => v.key === experiment.target_output)
+    const computedSummary = result ? summarizeExperimentResult(experiment, result, outputVar, verdictDraft) : ''
     const outcome = [computedSummary, outcomeDraft.trim()].filter(Boolean).join(' — ')
     await db.experiments.update(experiment.id, {
-      end_date: todayStr(),
+      end_date: logicalDateStr(),
       verdict: verdictDraft,
       outcome: outcome || null,
     })
@@ -208,13 +214,14 @@ export default function Insights() {
           together, negative means one rises as the other falls, and 0 means no relationship. <strong>n</strong> is how
           many days that estimate is based on — more days means a more reliable number. Only pairs with at least 10
           days of overlap and a moderate-or-stronger relationship (|r| ≥ 0.4) show up here, and lag 1 means the input
-          is compared to the next day's output. None of this proves cause — it just tells you what to test next.
+          is compared to the next day's output. Correlation, not causation — it just tells you what to test next.
         </p>
         {correlationCards.length === 0 ? (
           <p className="muted">Not enough data yet (need n≥10 per pair and |r|≥0.4).</p>
         ) : (
           correlationCards.slice(0, 8).map((c) => (
             <div key={c.id} style={{ marginBottom: 20 }}>
+              <h4 style={{ margin: '0 0 4px', fontSize: 14 }}>{labelFor(c.input)} vs {labelFor(c.output)}</h4>
               <div className="field-row" style={{ marginBottom: 4 }}>
                 <span className={`badge ${c.r > 0 ? 'positive' : 'negative'}`} style={{ textTransform: 'capitalize' }}>
                   {c.strength} {c.r > 0 ? 'positive' : 'negative'}
@@ -277,7 +284,7 @@ export default function Insights() {
             during the experiment — the app's best guess at whether the change actually moved anything, not proof.
           </p>
           {experiments.map((e) => {
-            const dayNum = Math.min(daysBetween(e.start_date, todayStr()) + 1, e.target_days || 14)
+            const dayNum = Math.min(daysBetween(e.start_date, logicalDateStr()) + 1, e.target_days || 14)
             const targetDays = e.target_days || 14
             const isEnding = endingId === e.id
             return (

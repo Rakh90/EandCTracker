@@ -30,10 +30,11 @@ function avg(...vals) {
   return nums.length ? mean(nums) : null
 }
 
-// Joins daily_log rows with benchmark_runs (averaged per day) and creatine_intakes (summed
-// per day) into one row per date carrying every variable referenced by INPUT_VARS /
-// OUTPUT_VARS plus raw energy/mood fields.
-export function buildDailySeries(logs, benchmarkRuns, creatineIntakes = []) {
+// Joins daily_log rows with benchmark_runs (averaged per day), creatine_intakes (summed
+// per day), and movement_logs (summed minutes / averaged intensity per day) into one row
+// per date carrying every variable referenced by INPUT_VARS / OUTPUT_VARS plus raw
+// energy/mood fields.
+export function buildDailySeries(logs, benchmarkRuns, creatineIntakes = [], movementLogs = []) {
   const byDate = new Map()
   for (const log of logs) {
     byDate.set(log.date, { date: log.date, ...log })
@@ -48,7 +49,13 @@ export function buildDailySeries(logs, benchmarkRuns, creatineIntakes = []) {
   for (const entry of creatineIntakes) {
     creatineByDate.set(entry.date, (creatineByDate.get(entry.date) || 0) + (entry.grams || 0))
   }
-  const dates = new Set([...byDate.keys(), ...runsByDate.keys(), ...creatineByDate.keys()])
+  const movementByDate = new Map()
+  for (const entry of movementLogs) {
+    const arr = movementByDate.get(entry.date) || []
+    arr.push(entry)
+    movementByDate.set(entry.date, arr)
+  }
+  const dates = new Set([...byDate.keys(), ...runsByDate.keys(), ...creatineByDate.keys(), ...movementByDate.keys()])
   const rows = []
   for (const date of dates) {
     const log = byDate.get(date) || { date }
@@ -57,11 +64,17 @@ export function buildDailySeries(logs, benchmarkRuns, creatineIntakes = []) {
     const spanArr = runs.map((r) => r.span_score).filter((v) => v !== null && v !== undefined)
     const rtArr = runs.map((r) => r.rt_score).filter((v) => v !== null && v !== undefined)
     const sprintArr = runs.map((r) => r.sprint_score).filter((v) => v !== null && v !== undefined)
+    // Movement now logs multiple sessions/day with a timestamp — fall back to the old
+    // single-entry daily_log fields for historical rows saved before that change.
+    const moves = movementByDate.get(date) || []
+    const moveIntensityArr = moves.map((m) => m.intensity).filter((v) => v !== null && v !== undefined)
+    const moveMinutesTotal = moves.reduce((sum, m) => sum + (m.minutes || 0), 0)
     rows.push({
       date,
       sleep_hours: log.sleep_hours ?? null,
       sleep_quality: log.sleep_quality ?? null,
-      movement_intensity: log.movement_intensity ?? null,
+      movement_intensity: moveIntensityArr.length ? mean(moveIntensityArr) : (log.movement_intensity ?? null),
+      movement_min: moves.length ? moveMinutesTotal : (log.movement_min ?? null),
       stress_avg: log.stress_avg ?? null,
       caffeine_mg: log.caffeine_mg ?? null,
       water_total: log.water_total ?? null,
