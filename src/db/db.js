@@ -65,12 +65,24 @@ export async function addMeal(meal) {
   return db.meals.add(meal)
 }
 
+export async function deleteMeal(id) {
+  return db.meals.delete(id)
+}
+
 export async function addCreatineIntake(entry) {
   return db.creatine_intakes.add(entry)
 }
 
+export async function deleteCreatineIntake(id) {
+  return db.creatine_intakes.delete(id)
+}
+
 export async function addMovementLog(entry) {
   return db.movement_logs.add(entry)
+}
+
+export async function deleteMovementLog(id) {
+  return db.movement_logs.delete(id)
 }
 
 export async function addBenchmarkRun(run) {

@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { addMovementLog } from '../db/db'
+import { addMovementLog, deleteMovementLog } from '../db/db'
 import { nowTimeHHMM, formatTime12h, logicalMinutes } from '../lib/dates'
 import { DEFS } from '../lib/definitions'
 import ChipGroup from './ui/ChipGroup'
 import Stepper from './ui/Stepper'
 import Slider from './ui/Slider'
 import TimeInput from './ui/TimeInput'
+import { IconTrash } from './ui/Icons'
 
 const MOVEMENT_TYPES = ['Walk', 'Run', 'Gym', 'Yoga', 'Sports']
 
@@ -34,13 +35,18 @@ export default function MovementLog({ date, entries }) {
         <span className="mono muted" style={{ marginLeft: 'auto' }}>{totalMinutes}m today</span>
       </div>
       {entries.length > 0 && (
-        <ul style={{ margin: '10px 0 0', paddingLeft: 18, fontSize: 14 }}>
+        <ul className="entry-list">
           {entries
             .slice()
             .sort((a, b) => logicalMinutes(a.time) - logicalMinutes(b.time))
             .map((e) => (
-              <li key={e.id}>
-                <span className="mono">{formatTime12h(e.time)}</span> — {e.movement_type}, {e.minutes}m, intensity {e.intensity}
+              <li key={e.id} className="entry-row">
+                <span className="entry-text">
+                  <span className="mono">{formatTime12h(e.time)}</span> — {e.movement_type}, {e.minutes}m, intensity {e.intensity}
+                </span>
+                <button type="button" className="icon-btn icon-btn-danger" onClick={() => deleteMovementLog(e.id)} aria-label="Delete entry">
+                  <IconTrash width={16} height={16} strokeWidth={1.8} />
+                </button>
               </li>
             ))}
         </ul>

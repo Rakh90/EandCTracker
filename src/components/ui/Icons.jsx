@@ -106,3 +106,32 @@ export function IconChevron(props) {
     </svg>
   )
 }
+
+export function IconTrash(props) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4 6.5h16" />
+      <path d="M8.5 6.5V5a1.5 1.5 0 0 1 1.5-1.5h4A1.5 1.5 0 0 1 15.5 5v1.5" />
+      <path d="M6.5 6.5 7.2 19a1.5 1.5 0 0 0 1.5 1.4h6.6a1.5 1.5 0 0 0 1.5-1.4l.7-12.5" />
+      <path d="M10 10.5v6M14 10.5v6" />
+    </svg>
+  )
+}
+
+export function IconBell(props) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M6 9.5a6 6 0 0 1 12 0v4.2l1.6 2.8H4.4L6 13.7Z" />
+      <path d="M9.5 19a2.5 2.5 0 0 0 5 0" />
+    </svg>
+  )
+}
+
+export function IconCloudOff(props) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M8 9.5a4 4 0 0 1 7.4-2.1M17.5 10.3A4 4 0 0 1 16 18H6.5a3.8 3.8 0 0 1-.9-7.5" />
+      <path d="M3 3l18 18" />
+    </svg>
+  )
+}

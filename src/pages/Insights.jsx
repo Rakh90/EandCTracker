@@ -9,6 +9,8 @@ import { useSetting } from '../hooks/useSetting'
 import { generateWeeklyReview } from '../lib/aiReview'
 import CorrelationScatter from '../components/dashboard/CorrelationScatter'
 import ChipGroup from '../components/ui/ChipGroup'
+import EmptyState from '../components/ui/EmptyState'
+import { IconSpark } from '../components/ui/Icons'
 
 const EMPTY = []
 const VERDICTS = ['Worked', 'No effect', 'Inconclusive']
@@ -137,6 +139,21 @@ export default function Insights() {
       outcome: outcome || null,
     })
     setEndingId(null)
+  }
+
+  if (logs.length === 0 && runs.length === 0) {
+    return (
+      <div>
+        <div className="top-bar">
+          <h1>Insights</h1>
+        </div>
+        <div className="card">
+          <EmptyState icon={IconSpark} title="No data yet" ctaLabel="Start a check-in" ctaTo="/checkin/morning">
+            Correlations, flags, and recommendations show up here once you've logged a few days — the more you log, the more this page can tell you.
+          </EmptyState>
+        </div>
+      </div>
+    )
   }
 
   return (

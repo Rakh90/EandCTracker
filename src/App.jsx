@@ -8,8 +8,10 @@ import Benchmark from './pages/Benchmark'
 import Dashboard from './pages/Dashboard'
 import Insights from './pages/Insights'
 import Settings from './pages/Settings'
+import { useBenchmarkReminderNotifications } from './hooks/useBenchmarkReminderNotifications'
 
 export default function App() {
+  useBenchmarkReminderNotifications()
   return (
     <>
       <main className="app-main">

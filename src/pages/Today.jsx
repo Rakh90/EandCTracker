@@ -7,9 +7,13 @@ import { mean } from '../lib/stats'
 import { useCreatineForDate, useMovementForDate } from '../hooks/useDailyLog'
 import { useSetting } from '../hooks/useSetting'
 import { labelFor } from '../lib/metrics'
+import { setSetting } from '../db/db'
+import { exportAllAsJSON, downloadFile } from '../lib/csv'
 import CreatineLog from '../components/CreatineLog'
 import MovementLog from '../components/MovementLog'
-import { IconSun, IconCloudSun, IconMoon, IconBrain, IconCheck, IconChevron, IconClock } from '../components/ui/Icons'
+import { IconSun, IconCloudSun, IconMoon, IconBrain, IconCheck, IconChevron, IconClock, IconCloudOff } from '../components/ui/Icons'
+
+const BACKUP_REMINDER_DAYS = 14
 
 function isAnyCheckInDone(log) {
   if (!log) return false
@@ -79,11 +83,23 @@ export default function Today() {
     () => db.experiments.filter((e) => !e.end_date).toArray(),
     []
   )
+  const [lastExportAt] = useSetting('lastExportAt', null)
 
   const logsByDate = new Map((allLogs || []).map((l) => [l.date, l]))
   const streak = computeStreak(logsByDate, date)
   const sortedReminders = [...(reminderTimes || [])].sort()
   const nowTime = nowTimeHHMM()
+
+  const daysSinceExport = lastExportAt ? daysBetween(lastExportAt, date) : null
+  const backupOverdue = daysSinceExport === null
+    ? (allLogs || []).length >= BACKUP_REMINDER_DAYS
+    : daysSinceExport >= BACKUP_REMINDER_DAYS
+
+  async function backupNow() {
+    const json = await exportAllAsJSON()
+    downloadFile(`eandc-export-${date}.json`, json, 'application/json')
+    await setSetting('lastExportAt', date)
+  }
 
   const morningDone = isMorningDone(todayLog)
   const middayDone = isMiddayDone(todayLog)
@@ -118,6 +134,25 @@ export default function Today() {
         <h1>Today</h1>
         <span className="mono muted">{date}</span>
       </div>
+
+      {backupOverdue && (
+        <div className="card" style={{ borderColor: 'var(--warn)' }}>
+          <div className="field-row">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span className="row-icon" style={{ color: 'var(--warn)' }}>
+                <IconCloudOff width={18} height={18} />
+              </span>
+              <div>
+                <p style={{ margin: 0, fontWeight: 600 }}>Back up your data</p>
+                <p className="muted" style={{ margin: 0 }}>
+                  {lastExportAt ? `It's been ${daysSinceExport} days since your last export.` : "You haven't exported your data yet."}
+                </p>
+              </div>
+            </div>
+            <button type="button" onClick={backupNow}>Export now</button>
+          </div>
+        </div>
+      )}
 
       <div className="card">
         <div className="field-row" style={{ marginBottom: 12 }}>

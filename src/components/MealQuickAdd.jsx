@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { addMeal } from '../db/db'
+import { addMeal, deleteMeal } from '../db/db'
 import { nowTimeHHMM } from '../lib/dates'
 import ChipGroup from './ui/ChipGroup'
+import { IconTrash } from './ui/Icons'
 
 const EFFECTS = ['energized', 'neutral', 'sluggish']
 
@@ -30,11 +31,16 @@ export default function MealQuickAdd({ date, meals }) {
     <div className="field">
       <label>Meals</label>
       {meals.length > 0 && (
-        <ul style={{ margin: '8px 0', paddingLeft: 18, fontSize: 14 }}>
+        <ul className="entry-list" style={{ margin: '8px 0 0' }}>
           {meals.map((m) => (
-            <li key={m.id}>
-              <span className="mono">{m.time}</span> — {m.description}
-              {m.energy_effect ? ` (${m.energy_effect})` : ''}
+            <li key={m.id} className="entry-row">
+              <span className="entry-text">
+                <span className="mono">{m.time}</span> — {m.description}
+                {m.energy_effect ? ` (${m.energy_effect})` : ''}
+              </span>
+              <button type="button" className="icon-btn icon-btn-danger" onClick={() => deleteMeal(m.id)} aria-label="Delete entry">
+                <IconTrash width={16} height={16} strokeWidth={1.8} />
+              </button>
             </li>
           ))}
         </ul>

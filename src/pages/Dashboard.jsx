@@ -10,6 +10,8 @@ import MovementChart from '../components/dashboard/MovementChart'
 import TrendRelationships from '../components/dashboard/TrendRelationships'
 import CorrelationHeatmap from '../components/dashboard/CorrelationHeatmap'
 import CrashMap from '../components/dashboard/CrashMap'
+import EmptyState from '../components/ui/EmptyState'
+import { IconChart } from '../components/ui/Icons'
 
 const RANGES = [7, 30, 90]
 const EMPTY = []
@@ -69,7 +71,11 @@ export default function Dashboard() {
       <CorrelationHeatmap series={correlationSeries} />
 
       {rangedSeries.length === 0 ? (
-        <div className="card"><p className="muted">No data yet — complete a check-in to see trends.</p></div>
+        <div className="card">
+          <EmptyState icon={IconChart} title="No data yet" ctaLabel="Start a check-in" ctaTo="/checkin/morning">
+            Complete a check-in or run the benchmark to start seeing trends here.
+          </EmptyState>
+        </div>
       ) : (
         <>
           <EnergyMoodChart series={rangedSeries} />
