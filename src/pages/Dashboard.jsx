@@ -43,17 +43,6 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {rangedSeries.length === 0 ? (
-        <div className="card"><p className="muted">No data yet — complete a check-in to see trends.</p></div>
-      ) : (
-        <>
-          <EnergyMoodChart series={rangedSeries} />
-          <SleepChart series={rangedSeries} />
-          <CompositeChart series={rangedSeries} />
-          <CreatineChart series={rangedSeries} />
-        </>
-      )}
-
       <div className="card">
         <div className="field-row">
           <label style={{ margin: 0 }}>Exclude calibration days ({calibrationDates.size})</label>
@@ -70,6 +59,18 @@ export default function Dashboard() {
       </div>
 
       <CorrelationHeatmap series={correlationSeries} />
+
+      {rangedSeries.length === 0 ? (
+        <div className="card"><p className="muted">No data yet — complete a check-in to see trends.</p></div>
+      ) : (
+        <>
+          <EnergyMoodChart series={rangedSeries} />
+          <SleepChart series={rangedSeries} />
+          <CompositeChart series={rangedSeries} />
+          <CreatineChart series={rangedSeries} />
+        </>
+      )}
+
       <CrashMap meals={meals} />
     </div>
   )

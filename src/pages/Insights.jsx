@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
 import { buildDailySeries, getCalibrationDates, filterCalibration, INPUT_VARS, OUTPUT_VARS } from '../lib/metrics'
 import { getThresholdFlags, getCorrelationCards, getWeeklyRecommendation } from '../lib/insights'
-import { computeExperimentResult, summarizeExperimentResult } from '../lib/experiments'
+import { computeExperimentResult, summarizeExperimentResult, backfillLegacyExperiment } from '../lib/experiments'
 import { todayStr, daysBetween } from '../lib/dates'
 import { useSetting } from '../hooks/useSetting'
 import { generateWeeklyReview } from '../lib/aiReview'
@@ -34,6 +34,17 @@ export default function Insights() {
     () => filterCalibration(fullSeries, calibrationDates, true),
     [fullSeries, calibrationDates]
   )
+
+  // One-time self-heal: experiments started before this app had
+  // direction-aware guidance were saved without `action`/`target_output` —
+  // that stored data doesn't gain the new fields on its own, so backfill it
+  // in place the first time each legacy record is seen.
+  useEffect(() => {
+    for (const experiment of experiments) {
+      const patch = backfillLegacyExperiment(experiment)
+      if (patch) db.experiments.update(experiment.id, patch)
+    }
+  }, [experiments])
 
   const flags = useMemo(() => getThresholdFlags(logs, fullSeries), [logs, fullSeries])
   const correlationCards = useMemo(() => getCorrelationCards(correlationSeries), [correlationSeries])

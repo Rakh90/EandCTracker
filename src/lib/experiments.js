@@ -1,5 +1,6 @@
 import { mean } from './stats'
 import { addDays, daysBetween, todayStr } from './dates'
+import { INPUT_VARS, OUTPUT_VARS } from './metrics'
 
 // Concrete, direction-aware instructions for running an experiment.
 // `direction` is which way to push the INPUT to move the OUTPUT toward its
@@ -43,6 +44,42 @@ export function guidanceFor(variableKey, direction = 'higher') {
     ? builder(direction)
     : { action: `Move this ${direction} for ${DAYS} days rather than letting it vary, then compare.` }
   return { days: DAYS, ...built }
+}
+
+// Experiments started before the app grew direction-aware guidance were only
+// ever saved with a free-text `hypothesis` (and, for a while, no `action` /
+// `target_output` at all) — that data doesn't retroactively grow the new
+// fields on its own, so old cards render with no "how to test it" text.
+// The hypothesis sentence's shape has stayed constant across every version
+// ("Changing X will shift Y (based on r=R, n=N)."), so it can be parsed back
+// into input/output/r and re-run through the current, direction-aware logic.
+const LEGACY_HYPOTHESIS_RE = /^Changing (.+) will shift (.+) \(based on r=(-?[\d.]+), n=(\d+)\)\.$/i
+
+export function backfillLegacyExperiment(experiment) {
+  if (experiment.action) return null // already has current-format guidance
+  const match = experiment.hypothesis?.match(LEGACY_HYPOTHESIS_RE)
+  if (!match) return null
+  const [, inputText, outputText, rText] = match
+  // Two legacy phrasings existed: the original used the raw key
+  // ("stress avg"), a later one used the pretty label ("stress (avg)") —
+  // check both.
+  const norm = (s) => s.trim().toLowerCase()
+  const findVar = (vars, text) => vars.find((v) => norm(v.label) === norm(text) || v.key.replace(/_/g, ' ') === norm(text))
+  const inputVar = findVar(INPUT_VARS, inputText)
+  const outputVar = findVar(OUTPUT_VARS, outputText)
+  const r = Number(rText)
+  if (!inputVar || !outputVar || Number.isNaN(r)) return null
+
+  const outputWantsHigher = outputVar.higherIsBetter ?? true
+  const direction = (r > 0) === outputWantsHigher ? 'higher' : 'lower'
+  const guidance = guidanceFor(inputVar.key, direction)
+  return {
+    target_output: outputVar.key,
+    target_days: guidance.days,
+    action: guidance.action,
+    caution: guidance.caution || false,
+    hypothesis: `${direction === 'higher' ? 'Increasing' : 'Decreasing'} ${inputVar.label.toLowerCase()} looks likely to move ${outputVar.label.toLowerCase()} toward its better range (based on r=${r.toFixed(2)}, n=${match[4]}).`,
+  }
 }
 
 // Compares the mean of `outputKey` during the experiment window against an
