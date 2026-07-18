@@ -16,8 +16,8 @@ export const SEQUENTIAL_BLUE = {
 }
 
 export const TEXT = {
-  light: { primary: '#0b0b0b', secondary: '#52514e', muted: '#898781', grid: '#e1e0d9' },
-  dark: { primary: '#ffffff', secondary: '#c3c2b7', muted: '#898781', grid: '#2c2c2a' },
+  light: { primary: '#12141A', secondary: '#5B6270', muted: '#9AA0AC', grid: '#E7E9EE' },
+  dark: { primary: '#F2F3F5', secondary: '#9AA1AF', muted: '#6B7280', grid: '#262B36' },
 }
 
 export function seriesColor(mode, index) {

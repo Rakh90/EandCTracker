@@ -4,6 +4,7 @@ import { db } from '../db/db'
 import { todayStr, addDays } from '../lib/dates'
 import { lastNDates } from '../lib/dates'
 import { mean } from '../lib/stats'
+import { IconSun, IconCloudSun, IconMoon, IconBrain, IconCheck, IconChevron } from '../components/ui/Icons'
 
 function isAnyCheckInDone(log) {
   if (!log) return false
@@ -108,16 +109,18 @@ export default function Today() {
           {streak > 0 && <span className="mono muted">{streak}-day streak</span>}
         </div>
         {[
-          { to: '/checkin/morning', label: 'Morning', done: morningDone },
-          { to: '/checkin/midday', label: 'Midday', done: middayDone },
-          { to: '/checkin/evening', label: 'Evening', done: eveningDone },
-          { to: '/benchmark', label: 'Benchmark', done: benchmarkDone },
-        ].map((item) => (
-          <Link key={item.to} to={item.to} style={{ textDecoration: 'none', color: 'inherit' }}>
-            <div className="field-row" style={{ marginBottom: 8, padding: '4px 0' }}>
-              <span>{item.label}</span>
-              <span className={`badge ${item.done ? 'done' : 'pending'}`}>{item.done ? 'done' : 'pending'}</span>
-            </div>
+          { to: '/checkin/morning', label: 'Morning', done: morningDone, Icon: IconSun },
+          { to: '/checkin/midday', label: 'Midday', done: middayDone, Icon: IconCloudSun },
+          { to: '/checkin/evening', label: 'Evening', done: eveningDone, Icon: IconMoon },
+          { to: '/benchmark', label: 'Benchmark', done: benchmarkDone, Icon: IconBrain },
+        ].map(({ to, label, done, Icon }) => (
+          <Link key={to} to={to} className="list-row">
+            <span className={`row-icon${done ? ' done' : ''}`}>
+              {done ? <IconCheck width={18} height={18} strokeWidth={2.2} /> : <Icon width={18} height={18} />}
+            </span>
+            <span className="row-label">{label}</span>
+            <span className={`badge ${done ? 'done' : 'pending'}`}>{done ? 'done' : 'pending'}</span>
+            <IconChevron width={16} height={16} className="row-chevron" />
           </Link>
         ))}
         {nextCheckIn ? (

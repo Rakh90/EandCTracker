@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#1B2A41"/>
+  <rect width="512" height="512" fill="#12141A"/>
   <polyline points="72,336 148,300 208,368 268,180 328,232 384,144 440,208"
-    fill="none" stroke="#2743E3" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="72" cy="336" r="18" fill="#F4F6F2"/>
-  <circle cx="208" cy="368" r="18" fill="#F4F6F2"/>
-  <circle cx="268" cy="180" r="18" fill="#F4F6F2"/>
-  <circle cx="384" cy="144" r="18" fill="#F4F6F2"/>
-  <circle cx="440" cy="208" r="18" fill="#F4F6F2"/>
+    fill="none" stroke="#5B7BFF" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="72" cy="336" r="18" fill="#F3F4F7"/>
+  <circle cx="208" cy="368" r="18" fill="#F3F4F7"/>
+  <circle cx="268" cy="180" r="18" fill="#F3F4F7"/>
+  <circle cx="384" cy="144" r="18" fill="#F3F4F7"/>
+  <circle cx="440" cy="208" r="18" fill="#F3F4F7"/>
 </svg>
