@@ -1,9 +1,20 @@
 import { pearson, lagPairs, mean, stddev } from './stats'
 import { INPUT_VARS, OUTPUT_VARS } from './metrics'
 import { lastNDates } from './dates'
+import { guidanceFor } from './experiments'
 
 const MIN_N = 10
 const MIN_R = 0.4
+
+// r is a correlation coefficient: -1 to 1. Positive = the two tend to move
+// together; negative = one goes up as the other goes down; near 0 = little
+// relationship. |r| below these bands isn't shown at all (see MIN_R above).
+export function strengthLabel(r) {
+  const a = Math.abs(r)
+  if (a >= 0.8) return 'very strong'
+  if (a >= 0.6) return 'strong'
+  return 'moderate'
+}
 
 export function getThresholdFlags(logs, series) {
   const flags = []
@@ -86,6 +97,7 @@ export function getCorrelationCards(series) {
         if (r === null || n < MIN_N || Math.abs(r) < MIN_R) continue
         const tendency = r > 0 ? 'higher' : 'lower'
         const lagText = lag === 0 ? 'the same day' : `${lag} day later`
+        const strength = strengthLabel(r)
         cards.push({
           id: `${input.key}__${output.key}__lag${lag}`,
           input: input.key,
@@ -93,7 +105,8 @@ export function getCorrelationCards(series) {
           lag,
           r,
           n,
-          text: `Higher ${input.label.toLowerCase()} tends to precede ${tendency} ${output.label.toLowerCase()} (${lagText}) (r=${r.toFixed(2)}, ${n} days). Correlation, not proven cause.`,
+          strength,
+          text: `On days with higher ${input.label.toLowerCase()}, ${output.label.toLowerCase()} tends to be ${tendency} ${lagText} — a ${strength} relationship (r=${r.toFixed(2)} across ${n} days). Correlation, not proof of cause.`,
         })
       }
     }
@@ -106,9 +119,15 @@ export function getWeeklyRecommendation(correlationCards, experiments) {
   const testedVars = new Set(experiments.map((e) => e.variable_changed))
   const candidate = correlationCards.find((c) => !testedVars.has(c.input))
   if (!candidate) return null
+  const inputLabel = INPUT_VARS.find((v) => v.key === candidate.input)?.label || candidate.input.replace(/_/g, ' ')
+  const outputLabel = OUTPUT_VARS.find((v) => v.key === candidate.output)?.label || candidate.output.replace(/_/g, ' ')
+  const guidance = guidanceFor(candidate.input)
   return {
     variable_changed: candidate.input,
-    hypothesis: `Changing ${candidate.input.replace(/_/g, ' ')} will shift ${candidate.output.replace(/_/g, ' ')} (based on r=${candidate.r.toFixed(2)}, n=${candidate.n}).`,
+    target_output: candidate.output,
+    target_days: guidance.days,
+    action: guidance.action,
+    hypothesis: `Changing ${inputLabel.toLowerCase()} will shift ${outputLabel.toLowerCase()} (based on r=${candidate.r.toFixed(2)}, n=${candidate.n}).`,
     sourceCard: candidate,
   }
 }

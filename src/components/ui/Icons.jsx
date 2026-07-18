@@ -82,6 +82,15 @@ export function IconBrain(props) {
   )
 }
 
+export function IconClock(props) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3.2 2" />
+    </svg>
+  )
+}
+
 export function IconCheck(props) {
   return (
     <svg {...base} {...props}>

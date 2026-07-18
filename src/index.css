@@ -318,6 +318,8 @@ a { color: var(--cobalt); }
 
 .badge.done { background: var(--ok-soft); color: var(--ok); }
 .badge.pending { background: var(--surface-2); color: var(--ink-muted); }
+.badge.positive { background: var(--accent-soft); color: var(--cobalt); }
+.badge.negative { background: var(--danger-soft); color: var(--danger); }
 
 .stat-row {
   display: flex;

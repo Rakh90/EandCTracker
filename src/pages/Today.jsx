@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
-import { todayStr, addDays } from '../lib/dates'
+import { todayStr, addDays, nowTimeHHMM, formatTime12h } from '../lib/dates'
 import { lastNDates } from '../lib/dates'
 import { mean } from '../lib/stats'
 import { useCreatineForDate } from '../hooks/useDailyLog'
+import { useSetting } from '../hooks/useSetting'
 import CreatineLog from '../components/CreatineLog'
-import { IconSun, IconCloudSun, IconMoon, IconBrain, IconCheck, IconChevron } from '../components/ui/Icons'
+import { IconSun, IconCloudSun, IconMoon, IconBrain, IconCheck, IconChevron, IconClock } from '../components/ui/Icons'
 
 function isAnyCheckInDone(log) {
   if (!log) return false
@@ -57,6 +58,7 @@ export default function Today() {
 
   const todayLog = useLiveQuery(() => db.daily_log.get(date), [date])
   const creatineEntries = useCreatineForDate(date)
+  const [reminderTimes] = useSetting('benchmarkReminderTimes', ['09:00'])
   const allLogs = useLiveQuery(() => db.daily_log.toArray(), [])
   const priorLogs = useLiveQuery(
     () => db.daily_log.where('date').anyOf(priorDates).toArray(),
@@ -73,6 +75,8 @@ export default function Today() {
 
   const logsByDate = new Map((allLogs || []).map((l) => [l.date, l]))
   const streak = computeStreak(logsByDate, date)
+  const sortedReminders = [...(reminderTimes || [])].sort()
+  const nowTime = nowTimeHHMM()
 
   const morningDone = isMorningDone(todayLog)
   const middayDone = isMiddayDone(todayLog)
@@ -140,6 +144,45 @@ export default function Today() {
           </Link>
         ) : (
           <p className="muted" style={{ marginTop: 14 }}>All check-ins complete for today.</p>
+        )}
+      </div>
+
+      <div className="card">
+        <div className="field-row" style={{ marginBottom: 12 }}>
+          <h3 style={{ margin: 0 }}>Benchmark reminders</h3>
+          <Link to="/settings" className="muted mono" style={{ fontSize: 12 }}>edit</Link>
+        </div>
+        {sortedReminders.length === 0 ? (
+          <p className="muted">
+            No reminder times set. <Link to="/settings">Add some in Settings</Link>.
+          </p>
+        ) : (
+          <>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {sortedReminders.map((t) => {
+                const passed = t <= nowTime
+                return (
+                  <span
+                    key={t}
+                    className="mono"
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                      padding: '6px 10px', borderRadius: 'var(--radius-pill)',
+                      background: passed ? 'var(--surface-2)' : 'var(--accent-soft)',
+                      color: passed ? 'var(--ink-muted)' : 'var(--cobalt)',
+                    }}
+                  >
+                    <IconClock width={14} height={14} strokeWidth={2} />
+                    {formatTime12h(t)}
+                  </span>
+                )
+              })}
+            </div>
+            <p className="muted" style={{ marginTop: 10, marginBottom: 0 }}>
+              {(benchmarkToday || []).length} of {sortedReminders.length} run today. These are visual nudges only —
+              browsers don't reliably allow this app to push background notifications, so check back at these times.
+            </p>
+          </>
         )}
       </div>
 

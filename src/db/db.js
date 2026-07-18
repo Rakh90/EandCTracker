@@ -37,7 +37,8 @@ export const MEAL_FIELDS = ['id', 'date', 'time', 'description', 'energy_effect'
 export const CREATINE_FIELDS = ['id', 'date', 'time', 'grams']
 
 export const EXPERIMENT_FIELDS = [
-  'id', 'start_date', 'end_date', 'variable_changed', 'hypothesis', 'outcome', 'verdict',
+  'id', 'start_date', 'end_date', 'variable_changed', 'target_output', 'target_days',
+  'action', 'hypothesis', 'outcome', 'verdict',
 ]
 
 export async function getOrCreateDailyLog(date) {

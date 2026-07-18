@@ -3,11 +3,14 @@ import { formatDisplayDate } from '../../lib/dates'
 import { TEXT } from '../../lib/palette'
 import { usePrefersDark } from '../../hooks/usePrefersDark'
 
+// Matches the app's own three check-in windows (see the time-frame captions on
+// each check-in page) instead of an unrelated 4-bucket split — that previously
+// left a "PM" column almost always empty since nothing else in the app treats
+// 2–6pm as its own window.
 const BUCKETS = [
   { label: 'AM', from: 0, to: 11 },
-  { label: 'Midday', from: 11, to: 14 },
-  { label: 'PM', from: 14, to: 18 },
-  { label: 'Eve', from: 18, to: 24 },
+  { label: 'Midday', from: 11, to: 16 },
+  { label: 'Evening', from: 16, to: 24 },
 ]
 
 const STATUS = {
