@@ -6,6 +6,7 @@ import EnergyMoodChart from '../components/dashboard/EnergyMoodChart'
 import SleepChart from '../components/dashboard/SleepChart'
 import CompositeChart from '../components/dashboard/CompositeChart'
 import CreatineChart from '../components/dashboard/CreatineChart'
+import TrendRelationships from '../components/dashboard/TrendRelationships'
 import CorrelationHeatmap from '../components/dashboard/CorrelationHeatmap'
 import CrashMap from '../components/dashboard/CrashMap'
 
@@ -42,6 +43,8 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+
+      {rangedSeries.length > 0 && <TrendRelationships series={rangedSeries} />}
 
       <div className="card">
         <div className="field-row">
