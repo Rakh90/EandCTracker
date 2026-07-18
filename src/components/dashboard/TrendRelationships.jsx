@@ -5,8 +5,6 @@ import { CATEGORICAL, TEXT } from '../../lib/palette'
 import { usePrefersDark } from '../../hooks/usePrefersDark'
 import ChipGroup from '../ui/ChipGroup'
 
-const MAX_OVERLAYS = 3
-
 const ANCHORS = [
   { key: 'cognitive', label: 'Cognitive (composite)', unit: '', get: (r) => r.composite },
   {
@@ -87,11 +85,15 @@ export default function TrendRelationships({ series }) {
   const [overlays, setOverlays] = useState(['sleep_quality', 'stress_avg'])
 
   function toggleOverlay(labels) {
-    if (labels.length > overlays.length && labels.length > MAX_OVERLAYS) return
     setOverlays(OVERLAY_OPTIONS.filter((o) => labels.includes(o.label)).map((o) => o.key))
   }
 
-  const activeSeries = [...ANCHORS, ...OVERLAY_OPTIONS.filter((o) => overlays.includes(o.key))]
+  // Anchors are always drawn, and always drawn LAST (after overlays) so they
+  // paint on top in SVG stacking order — combined with the heavier stroke
+  // below, that's what makes them read as "the point" instead of getting
+  // lost among however many overlays are toggled on.
+  const activeOverlays = OVERLAY_OPTIONS.filter((o) => overlays.includes(o.key))
+  const activeSeries = [...activeOverlays, ...ANCHORS]
   const seriesMeta = Object.fromEntries(activeSeries.map((s) => [s.key, s]))
 
   const data = useMemo(() => {
@@ -108,17 +110,30 @@ export default function TrendRelationships({ series }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [series, overlays])
 
-  const overlaySelectedLabels = OVERLAY_OPTIONS.filter((o) => overlays.includes(o.key)).map((o) => o.label)
+  const overlaySelectedLabels = activeOverlays.map((o) => o.label)
+  const allSelected = overlays.length === OVERLAY_OPTIONS.length
 
   return (
     <div className="card">
       <h3>Energy & cognition vs. everything else</h3>
       <p className="muted" style={{ marginTop: -6, marginBottom: 10 }}>
         Each line is scaled to its own min–max over this window, so shapes are comparable even though the
-        underlying units aren't — hover a point for real values. Cognitive and Energy are always shown; pick up
-        to {MAX_OVERLAYS} more to compare against.
+        underlying units aren't — hover a point for real values. Cognitive and Energy (bold, in front) are
+        always shown; toggle any or all of the rest to compare against them.
       </p>
-      <ChipGroup options={OVERLAY_OPTIONS.map((o) => o.label)} value={overlaySelectedLabels} onChange={toggleOverlay} multi />
+      <div className="field-row" style={{ marginBottom: 8 }}>
+        <ChipGroup options={OVERLAY_OPTIONS.map((o) => o.label)} value={overlaySelectedLabels} onChange={toggleOverlay} multi />
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+        <button
+          type="button"
+          onClick={() => setOverlays(OVERLAY_OPTIONS.map((o) => o.key))}
+          disabled={allSelected}
+        >
+          Select all
+        </button>
+        <button type="button" onClick={() => setOverlays([])} disabled={overlays.length === 0}>Clear</button>
+      </div>
       <ResponsiveContainer width="100%" height={260}>
         <LineChart data={data} margin={{ left: -20, top: 8, bottom: 4 }}>
           <CartesianGrid strokeDasharray="none" stroke={text.grid} vertical={false} />
@@ -126,20 +141,24 @@ export default function TrendRelationships({ series }) {
           <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: text.muted }} axisLine={{ stroke: text.grid }} tickLine={false} />
           <Tooltip content={<CustomTooltip seriesMeta={seriesMeta} text={text} />} />
           <Legend wrapperStyle={{ fontSize: 11, color: text.secondary }} />
-          {activeSeries.map((s, i) => (
-            <Line
-              key={s.key}
-              type="monotone"
-              dataKey={s.key}
-              name={s.label}
-              stroke={colors[COLOR_INDEX[s.key] % colors.length]}
-              strokeWidth={i < ANCHORS.length ? 2.5 : 2}
-              strokeDasharray={s.dashed ? '5 3' : undefined}
-              dot={false}
-              connectNulls
-              isAnimationActive={false}
-            />
-          ))}
+          {activeSeries.map((s) => {
+            const isAnchor = ANCHORS.includes(s)
+            return (
+              <Line
+                key={s.key}
+                type="monotone"
+                dataKey={s.key}
+                name={s.label}
+                stroke={colors[COLOR_INDEX[s.key] % colors.length]}
+                strokeWidth={isAnchor ? 3.5 : 1.5}
+                strokeOpacity={isAnchor ? 1 : 0.6}
+                strokeDasharray={s.dashed ? '5 3' : undefined}
+                dot={isAnchor ? { r: 2.5, strokeWidth: 0 } : false}
+                connectNulls
+                isAnimationActive={false}
+              />
+            )
+          })}
         </LineChart>
       </ResponsiveContainer>
     </div>

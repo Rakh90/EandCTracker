@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
-import { buildDailySeries, getCalibrationDates, filterCalibration, INPUT_VARS, OUTPUT_VARS } from '../lib/metrics'
-import { getThresholdFlags, getCorrelationCards, getWeeklyRecommendation } from '../lib/insights'
+import { buildDailySeries, getCalibrationDates, filterCalibration, labelFor } from '../lib/metrics'
+import { getThresholdFlags, getCorrelationCards, getWeeklyRecommendation, buildSummaryReport } from '../lib/insights'
 import { computeExperimentResult, summarizeExperimentResult, backfillLegacyExperiment } from '../lib/experiments'
 import { todayStr, daysBetween } from '../lib/dates'
 import { useSetting } from '../hooks/useSetting'
@@ -12,10 +12,6 @@ import ChipGroup from '../components/ui/ChipGroup'
 
 const EMPTY = []
 const VERDICTS = ['Worked', 'No effect', 'Inconclusive']
-
-function labelFor(key) {
-  return INPUT_VARS.find((v) => v.key === key)?.label || OUTPUT_VARS.find((v) => v.key === key)?.label || key.replace(/_/g, ' ')
-}
 
 export default function Insights() {
   const logs = useLiveQuery(() => db.daily_log.toArray(), []) ?? EMPTY
@@ -49,6 +45,8 @@ export default function Insights() {
   const flags = useMemo(() => getThresholdFlags(logs, fullSeries), [logs, fullSeries])
   const correlationCards = useMemo(() => getCorrelationCards(correlationSeries), [correlationSeries])
   const recommendation = useMemo(() => getWeeklyRecommendation(correlationCards, experiments), [correlationCards, experiments])
+  const summary = useMemo(() => buildSummaryReport(fullSeries, correlationCards, experiments), [fullSeries, correlationCards, experiments])
+  const [copyStatus, setCopyStatus] = useState('idle') // idle | copied
 
   async function handleGenerateReview() {
     setReviewStatus('loading')
@@ -78,6 +76,43 @@ export default function Insights() {
     })
   }
 
+  function reportAsText() {
+    if (!summary) return ''
+    const lines = [
+      `Energy & Cognition Tracker — summary report`,
+      `${summary.startDate} to ${summary.endDate} (${summary.totalDays} days logged)`,
+      '',
+      `Benchmark composite avg: ${summary.avgComposite !== null ? summary.avgComposite.toFixed(1) : '—'}`,
+      `Sleep quality avg: ${summary.avgSleepQuality !== null ? summary.avgSleepQuality.toFixed(1) : '—'}`,
+      `Sleep hours avg: ${summary.avgSleepHours !== null ? summary.avgSleepHours.toFixed(1) : '—'}`,
+      `Stress avg: ${summary.avgStress !== null ? summary.avgStress.toFixed(1) : '—'}`,
+      `Fog avg: ${summary.avgFog !== null ? summary.avgFog.toFixed(1) : '—'}`,
+      '',
+      summary.bestDay ? `Best day: ${summary.bestDay.date} (composite ${summary.bestDay.composite.toFixed(1)})` : '',
+      summary.worstDay ? `Toughest day: ${summary.worstDay.date} (composite ${summary.worstDay.composite.toFixed(1)})` : '',
+      '',
+      'Top correlations:',
+      ...(summary.topCorrelations.length
+        ? summary.topCorrelations.map((c) => `- ${c.text}`)
+        : ['- Not enough data yet.']),
+      '',
+      `Experiments: ${summary.experimentStats.total} total, ${summary.experimentStats.ongoing} ongoing, ` +
+        `${summary.experimentStats.worked} worked, ${summary.experimentStats.noEffect} no effect, ` +
+        `${summary.experimentStats.inconclusive} inconclusive.`,
+    ]
+    return lines.join('\n')
+  }
+
+  async function copyReport() {
+    try {
+      await navigator.clipboard.writeText(reportAsText())
+      setCopyStatus('copied')
+      setTimeout(() => setCopyStatus('idle'), 2000)
+    } catch {
+      setCopyStatus('idle')
+    }
+  }
+
   function startEnding(experiment) {
     setEndingId(experiment.id)
     setVerdictDraft(null)
@@ -103,6 +138,55 @@ export default function Insights() {
       <div className="top-bar">
         <h1>Insights</h1>
       </div>
+
+      {summary && (
+        <div className="card">
+          <div className="field-row" style={{ marginBottom: 8 }}>
+            <h3 style={{ margin: 0 }}>Summary report</h3>
+            <button type="button" onClick={copyReport}>{copyStatus === 'copied' ? 'Copied!' : 'Copy report'}</button>
+          </div>
+          <p className="muted" style={{ marginTop: -4, marginBottom: 12 }}>
+            {summary.startDate} to {summary.endDate} — {summary.totalDays} days logged.
+          </p>
+          <div className="stat-row">
+            <div className="stat-tile">
+              <div className="num">{summary.avgComposite !== null ? summary.avgComposite.toFixed(1) : '—'}</div>
+              <div className="label">Composite avg</div>
+            </div>
+            <div className="stat-tile">
+              <div className="num">{summary.avgSleepQuality !== null ? summary.avgSleepQuality.toFixed(1) : '—'}</div>
+              <div className="label">Sleep quality avg</div>
+            </div>
+            <div className="stat-tile">
+              <div className="num">{summary.avgStress !== null ? summary.avgStress.toFixed(1) : '—'}</div>
+              <div className="label">Stress avg</div>
+            </div>
+            <div className="stat-tile">
+              <div className="num">{summary.avgFog !== null ? summary.avgFog.toFixed(1) : '—'}</div>
+              <div className="label">Fog avg</div>
+            </div>
+          </div>
+          {(summary.bestDay || summary.worstDay) && (
+            <p style={{ marginTop: 12, marginBottom: 0 }}>
+              {summary.bestDay && <>Best day was <strong>{summary.bestDay.date}</strong> (composite {summary.bestDay.composite.toFixed(1)}). </>}
+              {summary.worstDay && <>Toughest day was <strong>{summary.worstDay.date}</strong> (composite {summary.worstDay.composite.toFixed(1)}).</>}
+            </p>
+          )}
+          {summary.topCorrelations.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <p style={{ margin: '0 0 4px', fontWeight: 600 }}>Top correlations</p>
+              {summary.topCorrelations.map((c) => (
+                <p key={c.id} className="muted" style={{ margin: '0 0 4px' }}>{c.text}</p>
+              ))}
+            </div>
+          )}
+          <p style={{ marginTop: 12, marginBottom: 0 }}>
+            Experiments: {summary.experimentStats.total} total, {summary.experimentStats.ongoing} ongoing,{' '}
+            {summary.experimentStats.worked} worked, {summary.experimentStats.noEffect} no effect,{' '}
+            {summary.experimentStats.inconclusive} inconclusive.
+          </p>
+        </div>
+      )}
 
       <div className="card">
         <h3>Flags</h3>

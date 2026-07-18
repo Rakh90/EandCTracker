@@ -9,7 +9,6 @@ import CaffeineQuickAdd from '../components/CaffeineQuickAdd'
 import WaterQuickAdd from '../components/WaterQuickAdd'
 import { DEFS } from '../lib/definitions'
 
-const MOVEMENT_TYPES = ['Walk', 'Run', 'Gym', 'Yoga', 'Sports', 'None']
 const SYMPTOMS = [
   { key: 'symptom_headache', label: 'Headache' },
   { key: 'symptom_soreness', label: 'Soreness' },
@@ -47,13 +46,6 @@ export default function CheckInEvening() {
       </p>
 
       <div className="card">
-        <h3>Movement</h3>
-        <ChipGroup label="Type" options={MOVEMENT_TYPES} value={log.movement_type} onChange={(v) => patch({ movement_type: v })} />
-        <Stepper label="Minutes" value={log.movement_min} onChange={(v) => patch({ movement_min: v })} min={0} max={300} step={5} />
-        <Slider label="Intensity" value={log.movement_intensity} onChange={(v) => patch({ movement_intensity: v })} min={1} max={10} hint={DEFS.movement_intensity} />
-      </div>
-
-      <div className="card">
         <h3>Symptoms</h3>
         <ChipGroup options={SYMPTOMS.map((s) => s.label)} value={activeSymptoms} onChange={toggleSymptoms} multi />
         {SYMPTOMS.filter((s) => (log[s.key] ?? 0) > 0).map((s) => (
@@ -87,8 +79,8 @@ export default function CheckInEvening() {
       <div className="card">
         <h3>Remaining food & intake</h3>
         <MealQuickAdd date={date} meals={meals} />
-        <CaffeineQuickAdd totalMg={log.caffeine_mg} onAdd={(mg) => patch({ caffeine_mg: (log.caffeine_mg || 0) + mg })} />
-        <WaterQuickAdd totalOz={log.water_total} onAdd={(oz) => patch({ water_total: (log.water_total || 0) + oz })} />
+        <CaffeineQuickAdd totalMg={log.caffeine_mg} onAdd={(mg) => patch({ caffeine_mg: Math.max(0, (log.caffeine_mg || 0) + mg) })} />
+        <WaterQuickAdd totalOz={log.water_total} onAdd={(oz) => patch({ water_total: Math.max(0, (log.water_total || 0) + oz) })} />
       </div>
 
       <div className="card">

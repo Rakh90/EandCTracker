@@ -47,8 +47,8 @@ export default function CheckInMorning() {
       <div className="card">
         <h3>Breakfast & intake</h3>
         <MealQuickAdd date={date} meals={meals} />
-        <CaffeineQuickAdd totalMg={log.caffeine_mg} onAdd={(mg) => patch({ caffeine_mg: (log.caffeine_mg || 0) + mg })} />
-        <WaterQuickAdd totalOz={log.water_total} onAdd={(oz) => patch({ water_total: (log.water_total || 0) + oz })} />
+        <CaffeineQuickAdd totalMg={log.caffeine_mg} onAdd={(mg) => patch({ caffeine_mg: Math.max(0, (log.caffeine_mg || 0) + mg) })} />
+        <WaterQuickAdd totalOz={log.water_total} onAdd={(oz) => patch({ water_total: Math.max(0, (log.water_total || 0) + oz) })} />
       </div>
     </div>
   )

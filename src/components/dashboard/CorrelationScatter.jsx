@@ -47,6 +47,7 @@ export default function CorrelationScatter({ series, xKey, yKey, xLabel, yLabel 
 
   return (
     <div>
+      <h4 style={{ margin: '0 0 2px', fontSize: 14 }}>{xLabel} vs {yLabel}</h4>
       <p className="muted" style={{ marginBottom: 4, fontSize: 11 }}>{xLabel} (x-axis) vs {yLabel} (y-axis) — each dot is one day</p>
       <ResponsiveContainer width="100%" height={150}>
         <ComposedChart data={points} margin={{ left: -20, top: 4, bottom: 4, right: 8 }}>

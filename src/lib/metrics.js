@@ -21,6 +21,10 @@ export const OUTPUT_VARS = [
   { key: 'pm_energy', label: 'PM energy', higherIsBetter: true },
 ]
 
+export function labelFor(key) {
+  return INPUT_VARS.find((v) => v.key === key)?.label || OUTPUT_VARS.find((v) => v.key === key)?.label || key.replace(/_/g, ' ')
+}
+
 function avg(...vals) {
   const nums = vals.filter((v) => v !== null && v !== undefined && !Number.isNaN(v))
   return nums.length ? mean(nums) : null

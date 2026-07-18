@@ -11,6 +11,13 @@ export default function WaterQuickAdd({ totalOz, onAdd }) {
     setCustom('')
   }
 
+  function subtractCustom() {
+    const n = Number(custom)
+    if (!n) return
+    onAdd(-n)
+    setCustom('')
+  }
+
   return (
     <div className="field">
       <div className="field-row">
@@ -23,6 +30,11 @@ export default function WaterQuickAdd({ totalOz, onAdd }) {
             {p.label}
           </div>
         ))}
+        {WATER_PRESETS.map((p) => (
+          <div key={`sub-${p.label}`} className="chip" role="button" tabIndex={0} onClick={() => onAdd(-p.oz)}>
+            −{p.oz}oz
+          </div>
+        ))}
       </div>
       <div className="field-row" style={{ marginTop: 8 }}>
         <input
@@ -33,6 +45,7 @@ export default function WaterQuickAdd({ totalOz, onAdd }) {
           onChange={(e) => setCustom(e.target.value)}
         />
         <button type="button" onClick={addCustom} disabled={!custom}>Add</button>
+        <button type="button" className="danger" onClick={subtractCustom} disabled={!custom}>Subtract</button>
       </div>
     </div>
   )

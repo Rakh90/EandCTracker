@@ -1,13 +1,20 @@
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
-import { todayStr, addDays, nowTimeHHMM, formatTime12h } from '../lib/dates'
+import { todayStr, addDays, nowTimeHHMM, formatTime12h, daysBetween } from '../lib/dates'
 import { lastNDates } from '../lib/dates'
 import { mean } from '../lib/stats'
-import { useCreatineForDate } from '../hooks/useDailyLog'
+import { useCreatineForDate, useDailyLog } from '../hooks/useDailyLog'
 import { useSetting } from '../hooks/useSetting'
+import { labelFor } from '../lib/metrics'
 import CreatineLog from '../components/CreatineLog'
+import ChipGroup from '../components/ui/ChipGroup'
+import Stepper from '../components/ui/Stepper'
+import Slider from '../components/ui/Slider'
+import { DEFS } from '../lib/definitions'
 import { IconSun, IconCloudSun, IconMoon, IconBrain, IconCheck, IconChevron, IconClock } from '../components/ui/Icons'
+
+const MOVEMENT_TYPES = ['Walk', 'Run', 'Gym', 'Yoga', 'Sports', 'None']
 
 function isAnyCheckInDone(log) {
   if (!log) return false
@@ -47,7 +54,7 @@ function isMiddayDone(log) {
 
 function isEveningDone(log) {
   if (!log) return false
-  return ['movement_type', 'exec_tasks', 'pm_phys_energy', 'pm_mental_energy', 'pm_mood', 'notes']
+  return ['exec_tasks', 'pm_phys_energy', 'pm_mental_energy', 'pm_mood', 'notes']
     .some((k) => log[k] !== null && log[k] !== undefined)
 }
 
@@ -56,6 +63,7 @@ export default function Today() {
   const baselineDates = lastNDates(8, date) // includes today as last entry
   const priorDates = baselineDates.slice(0, 7)
 
+  const { log: editableLog, patch } = useDailyLog(date)
   const todayLog = useLiveQuery(() => db.daily_log.get(date), [date])
   const creatineEntries = useCreatineForDate(date)
   const [reminderTimes] = useSetting('benchmarkReminderTimes', ['09:00'])
@@ -71,6 +79,10 @@ export default function Today() {
   const benchmarkPrior = useLiveQuery(
     () => db.benchmark_runs.where('date').anyOf(priorDates).toArray(),
     [date]
+  )
+  const activeExperiments = useLiveQuery(
+    () => db.experiments.filter((e) => !e.end_date).toArray(),
+    []
   )
 
   const logsByDate = new Map((allLogs || []).map((l) => [l.date, l]))
@@ -210,6 +222,39 @@ export default function Today() {
             <div className="muted">vs {fmt(priorComposite)}</div>
           </div>
         </div>
+      </div>
+
+      {(activeExperiments || []).length > 0 && (
+        <div className="card">
+          <div className="field-row" style={{ marginBottom: 8 }}>
+            <h3 style={{ margin: 0 }}>Active experiments</h3>
+            <Link to="/insights" className="muted mono" style={{ fontSize: 12 }}>manage</Link>
+          </div>
+          {activeExperiments.map((e) => {
+            const targetDays = e.target_days || 14
+            const dayNum = Math.min(daysBetween(e.start_date, date) + 1, targetDays)
+            return (
+              <div key={e.id} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
+                <div className="field-row" style={{ marginBottom: 2 }}>
+                  <p style={{ margin: 0, fontWeight: 600, textTransform: 'capitalize' }}>{labelFor(e.variable_changed)}</p>
+                  <span className="badge pending">day {dayNum} of {targetDays}</span>
+                </div>
+                {e.action && <p className="muted" style={{ margin: 0 }}>{e.action}</p>}
+              </div>
+            )
+          })}
+          <p className="muted" style={{ margin: 0, fontSize: 12 }}>
+            To end an experiment and record its outcome, head to the Insights page.
+          </p>
+        </div>
+      )}
+
+      <div className="card">
+        <h3>Movement</h3>
+        <p className="muted" style={{ marginTop: -8, marginBottom: 12 }}>Not tied to a time of day — log it whenever it happens.</p>
+        <ChipGroup label="Type" options={MOVEMENT_TYPES} value={editableLog.movement_type} onChange={(v) => patch({ movement_type: v })} />
+        <Stepper label="Minutes" value={editableLog.movement_min} onChange={(v) => patch({ movement_min: v })} min={0} max={300} step={5} />
+        <Slider label="Intensity" value={editableLog.movement_intensity} onChange={(v) => patch({ movement_intensity: v })} min={1} max={10} hint={DEFS.movement_intensity} />
       </div>
 
       <div className="card">

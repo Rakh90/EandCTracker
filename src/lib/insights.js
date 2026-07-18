@@ -115,6 +115,47 @@ export function getCorrelationCards(series) {
   return cards
 }
 
+// A rule-based digest of everything else on this page, condensed into one
+// readable summary — coverage, key averages, best/worst days, top
+// correlations, experiment outcomes. No new analysis, just a rollup of what
+// the other cards already computed.
+export function buildSummaryReport(series, correlationCards, experiments) {
+  const dated = series.filter((r) => r.date).sort((a, b) => a.date.localeCompare(b.date))
+  if (dated.length === 0) return null
+
+  function avgOf(key) {
+    const vals = dated.map((r) => r[key]).filter((v) => v !== null && v !== undefined && !Number.isNaN(v))
+    return vals.length ? mean(vals) : null
+  }
+
+  const withComposite = dated.filter((r) => r.composite !== null && r.composite !== undefined)
+  const bestDay = withComposite.length ? withComposite.reduce((a, b) => (b.composite > a.composite ? b : a)) : null
+  const worstDay = withComposite.length ? withComposite.reduce((a, b) => (b.composite < a.composite ? b : a)) : null
+
+  const experimentStats = {
+    total: experiments.length,
+    ongoing: experiments.filter((e) => !e.end_date).length,
+    worked: experiments.filter((e) => e.verdict === 'Worked').length,
+    noEffect: experiments.filter((e) => e.verdict === 'No effect').length,
+    inconclusive: experiments.filter((e) => e.verdict === 'Inconclusive').length,
+  }
+
+  return {
+    startDate: dated[0].date,
+    endDate: dated[dated.length - 1].date,
+    totalDays: dated.length,
+    avgComposite: avgOf('composite'),
+    avgSleepQuality: avgOf('sleep_quality'),
+    avgSleepHours: avgOf('sleep_hours'),
+    avgStress: avgOf('stress_avg'),
+    avgFog: avgOf('fog'),
+    bestDay,
+    worstDay,
+    topCorrelations: correlationCards.slice(0, 3),
+    experimentStats,
+  }
+}
+
 export function getWeeklyRecommendation(correlationCards, experiments) {
   const testedVars = new Set(experiments.map((e) => e.variable_changed))
   const candidate = correlationCards.find((c) => !testedVars.has(c.input))

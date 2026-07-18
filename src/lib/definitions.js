@@ -14,12 +14,14 @@ export const DEFS = {
   exec_organization: '1 = scattered, disorganized · 5 = kept up with effort · 10 = organized, on top of everything',
 }
 
+// mg is the amount for a "default" serving of defaultOz — mgPerOz derives
+// from that pair so the quick-add slider can scale to any custom pour.
 export const CAFFEINE_PRESETS = [
-  { label: 'Drip coffee (8oz)', mg: 95 },
-  { label: 'French press (8oz)', mg: 115 },
-  { label: 'Espresso shot', mg: 63 },
-  { label: 'Cold brew (12oz)', mg: 200 },
-  { label: 'Tea (8oz)', mg: 47 },
+  { label: 'Drip coffee', mg: 95, defaultOz: 8 },
+  { label: 'French press', mg: 115, defaultOz: 8 },
+  { label: 'Espresso', mg: 63, defaultOz: 1 },
+  { label: 'Cold brew', mg: 200, defaultOz: 12 },
+  { label: 'Tea', mg: 47, defaultOz: 8 },
 ]
 
 export const CAFFEINE_GUIDE =
