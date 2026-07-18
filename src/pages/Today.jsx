@@ -107,25 +107,22 @@ export default function Today() {
           <h3 style={{ margin: 0 }}>Check-ins</h3>
           {streak > 0 && <span className="mono muted">{streak}-day streak</span>}
         </div>
-        <div className="field-row" style={{ marginBottom: 8 }}>
-          <span>Morning</span>
-          <span className={`badge ${morningDone ? 'done' : 'pending'}`}>{morningDone ? 'done' : 'pending'}</span>
-        </div>
-        <div className="field-row" style={{ marginBottom: 8 }}>
-          <span>Midday</span>
-          <span className={`badge ${middayDone ? 'done' : 'pending'}`}>{middayDone ? 'done' : 'pending'}</span>
-        </div>
-        <div className="field-row" style={{ marginBottom: 8 }}>
-          <span>Evening</span>
-          <span className={`badge ${eveningDone ? 'done' : 'pending'}`}>{eveningDone ? 'done' : 'pending'}</span>
-        </div>
-        <div className="field-row">
-          <span>Benchmark</span>
-          <span className={`badge ${benchmarkDone ? 'done' : 'pending'}`}>{benchmarkDone ? 'done' : 'pending'}</span>
-        </div>
+        {[
+          { to: '/checkin/morning', label: 'Morning', done: morningDone },
+          { to: '/checkin/midday', label: 'Midday', done: middayDone },
+          { to: '/checkin/evening', label: 'Evening', done: eveningDone },
+          { to: '/benchmark', label: 'Benchmark', done: benchmarkDone },
+        ].map((item) => (
+          <Link key={item.to} to={item.to} style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div className="field-row" style={{ marginBottom: 8, padding: '4px 0' }}>
+              <span>{item.label}</span>
+              <span className={`badge ${item.done ? 'done' : 'pending'}`}>{item.done ? 'done' : 'pending'}</span>
+            </div>
+          </Link>
+        ))}
         {nextCheckIn ? (
           <Link to={nextCheckIn.to}>
-            <button type="button" className="primary" style={{ width: '100%', marginTop: 14 }}>{nextCheckIn.label}</button>
+            <button type="button" className="primary" style={{ width: '100%', marginTop: 10 }}>{nextCheckIn.label}</button>
           </Link>
         ) : (
           <p className="muted" style={{ marginTop: 14 }}>All check-ins complete for today.</p>
