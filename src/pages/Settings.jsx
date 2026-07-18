@@ -13,10 +13,10 @@ export default function Settings() {
 
   const times = reminderTimes || []
 
-  const commit = import.meta.env.VITE_APP_COMMIT
+  const version = import.meta.env.VITE_APP_VERSION
   const buildTime = import.meta.env.VITE_APP_BUILD_TIME
-  const versionLabel = commit
-    ? `${commit.slice(0, 7)} · built ${new Date(buildTime).toLocaleString()}`
+  const versionLabel = version
+    ? `${version} · built ${new Date(buildTime).toLocaleString()}`
     : 'dev build'
 
   function updateReminderTime(index, value) {

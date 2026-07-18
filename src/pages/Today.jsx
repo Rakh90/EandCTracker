@@ -4,8 +4,8 @@ import { db } from '../db/db'
 import { todayStr, addDays } from '../lib/dates'
 import { lastNDates } from '../lib/dates'
 import { mean } from '../lib/stats'
-import { useDailyLog } from '../hooks/useDailyLog'
-import Stepper from '../components/ui/Stepper'
+import { useCreatineForDate } from '../hooks/useDailyLog'
+import CreatineLog from '../components/CreatineLog'
 import { IconSun, IconCloudSun, IconMoon, IconBrain, IconCheck, IconChevron } from '../components/ui/Icons'
 
 function isAnyCheckInDone(log) {
@@ -56,7 +56,7 @@ export default function Today() {
   const priorDates = baselineDates.slice(0, 7)
 
   const todayLog = useLiveQuery(() => db.daily_log.get(date), [date])
-  const { patch } = useDailyLog(date)
+  const creatineEntries = useCreatineForDate(date)
   const allLogs = useLiveQuery(() => db.daily_log.toArray(), [])
   const priorLogs = useLiveQuery(
     () => db.daily_log.where('date').anyOf(priorDates).toArray(),
@@ -171,16 +171,8 @@ export default function Today() {
 
       <div className="card">
         <h3>Creatine</h3>
-        <p className="muted" style={{ marginTop: -8, marginBottom: 12 }}>Not tied to a time of day — log it whenever you take it.</p>
-        <Stepper
-          label="Grams today"
-          value={todayLog?.creatine_g ?? 0}
-          onChange={(v) => patch({ creatine_g: v })}
-          min={0}
-          max={20}
-          step={1}
-          unit="g"
-        />
+        <p className="muted" style={{ marginTop: -8, marginBottom: 12 }}>Not tied to a time of day — submit each time you take a dose.</p>
+        <CreatineLog date={date} entries={creatineEntries} />
       </div>
     </div>
   )

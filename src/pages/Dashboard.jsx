@@ -5,6 +5,7 @@ import { buildDailySeries, getCalibrationDates, filterCalibration } from '../lib
 import EnergyMoodChart from '../components/dashboard/EnergyMoodChart'
 import SleepChart from '../components/dashboard/SleepChart'
 import CompositeChart from '../components/dashboard/CompositeChart'
+import CreatineChart from '../components/dashboard/CreatineChart'
 import CorrelationHeatmap from '../components/dashboard/CorrelationHeatmap'
 import CrashMap from '../components/dashboard/CrashMap'
 
@@ -18,8 +19,9 @@ export default function Dashboard() {
   const logs = useLiveQuery(() => db.daily_log.toArray(), []) ?? EMPTY
   const runs = useLiveQuery(() => db.benchmark_runs.toArray(), []) ?? EMPTY
   const meals = useLiveQuery(() => db.meals.toArray(), []) ?? EMPTY
+  const creatineIntakes = useLiveQuery(() => db.creatine_intakes.toArray(), []) ?? EMPTY
 
-  const fullSeries = useMemo(() => buildDailySeries(logs, runs), [logs, runs])
+  const fullSeries = useMemo(() => buildDailySeries(logs, runs, creatineIntakes), [logs, runs, creatineIntakes])
   const rangedSeries = useMemo(() => fullSeries.slice(-range), [fullSeries, range])
   const calibrationDates = useMemo(() => getCalibrationDates(runs), [runs])
   const correlationSeries = useMemo(
@@ -48,6 +50,7 @@ export default function Dashboard() {
           <EnergyMoodChart series={rangedSeries} />
           <SleepChart series={rangedSeries} />
           <CompositeChart series={rangedSeries} />
+          <CreatineChart series={rangedSeries} />
         </>
       )}
 

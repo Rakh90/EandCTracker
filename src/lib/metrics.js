@@ -7,6 +7,7 @@ export const INPUT_VARS = [
   { key: 'stress_avg', label: 'Stress (avg)' },
   { key: 'caffeine_mg', label: 'Caffeine (mg)' },
   { key: 'water_total', label: 'Water total' },
+  { key: 'creatine_g', label: 'Creatine (g)' },
 ]
 
 export const OUTPUT_VARS = [
@@ -23,9 +24,10 @@ function avg(...vals) {
   return nums.length ? mean(nums) : null
 }
 
-// Joins daily_log rows with benchmark_runs (averaged per day) into one row per date
-// carrying every variable referenced by INPUT_VARS / OUTPUT_VARS plus raw energy/mood fields.
-export function buildDailySeries(logs, benchmarkRuns) {
+// Joins daily_log rows with benchmark_runs (averaged per day) and creatine_intakes (summed
+// per day) into one row per date carrying every variable referenced by INPUT_VARS /
+// OUTPUT_VARS plus raw energy/mood fields.
+export function buildDailySeries(logs, benchmarkRuns, creatineIntakes = []) {
   const byDate = new Map()
   for (const log of logs) {
     byDate.set(log.date, { date: log.date, ...log })
@@ -36,7 +38,11 @@ export function buildDailySeries(logs, benchmarkRuns) {
     arr.push(run)
     runsByDate.set(run.date, arr)
   }
-  const dates = new Set([...byDate.keys(), ...runsByDate.keys()])
+  const creatineByDate = new Map()
+  for (const entry of creatineIntakes) {
+    creatineByDate.set(entry.date, (creatineByDate.get(entry.date) || 0) + (entry.grams || 0))
+  }
+  const dates = new Set([...byDate.keys(), ...runsByDate.keys(), ...creatineByDate.keys()])
   const rows = []
   for (const date of dates) {
     const log = byDate.get(date) || { date }
@@ -53,6 +59,7 @@ export function buildDailySeries(logs, benchmarkRuns) {
       stress_avg: log.stress_avg ?? null,
       caffeine_mg: log.caffeine_mg ?? null,
       water_total: log.water_total ?? null,
+      creatine_g: creatineByDate.get(date) ?? null,
       focus_minutes: log.focus_minutes ?? null,
       memory_slips: log.memory_slips ?? null,
       fog: avg(log.am_fog, log.midday_fog),

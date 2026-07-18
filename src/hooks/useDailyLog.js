@@ -13,3 +13,8 @@ export function useMealsForDate(date) {
   const meals = useLiveQuery(() => db.meals.where('date').equals(date).toArray(), [date])
   return meals || []
 }
+
+export function useCreatineForDate(date) {
+  const entries = useLiveQuery(() => db.creatine_intakes.where('date').equals(date).toArray(), [date])
+  return entries || []
+}
