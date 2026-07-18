@@ -10,13 +10,15 @@ export const INPUT_VARS = [
   { key: 'creatine_g', label: 'Creatine (g)' },
 ]
 
+// higherIsBetter drives which direction an experiment should actually push an
+// input toward — fog and memory slips are bad when high, unlike the rest.
 export const OUTPUT_VARS = [
-  { key: 'composite', label: 'Benchmark composite' },
-  { key: 'focus_minutes', label: 'Focus minutes' },
-  { key: 'fog', label: 'Fog' },
-  { key: 'memory_slips', label: 'Memory slips' },
-  { key: 'exec_avg', label: 'Executive function (avg)' },
-  { key: 'pm_energy', label: 'PM energy' },
+  { key: 'composite', label: 'Benchmark composite', higherIsBetter: true },
+  { key: 'focus_minutes', label: 'Focus minutes', higherIsBetter: true },
+  { key: 'fog', label: 'Fog', higherIsBetter: false },
+  { key: 'memory_slips', label: 'Memory slips', higherIsBetter: false },
+  { key: 'exec_avg', label: 'Executive function (avg)', higherIsBetter: true },
+  { key: 'pm_energy', label: 'PM energy', higherIsBetter: true },
 ]
 
 function avg(...vals) {

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { addCreatineIntake } from '../db/db'
-import { nowTimeHHMM } from '../lib/dates'
+import { nowTimeHHMM, formatTime12h } from '../lib/dates'
 
 export default function CreatineLog({ date, entries }) {
   const [grams, setGrams] = useState('5')
@@ -36,7 +36,7 @@ export default function CreatineLog({ date, entries }) {
             .sort((a, b) => (a.time < b.time ? -1 : a.time > b.time ? 1 : 0))
             .map((e) => (
               <li key={e.id}>
-                <span className="mono">{e.time}</span> — {e.grams}g
+                <span className="mono">{formatTime12h(e.time)}</span> — {e.grams}g
               </li>
             ))}
         </ul>

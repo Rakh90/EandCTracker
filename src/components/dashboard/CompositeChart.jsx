@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts'
+import { ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts'
 import { formatDisplayDate } from '../../lib/dates'
 import { CATEGORICAL, TEXT } from '../../lib/palette'
 import { usePrefersDark } from '../../hooks/usePrefersDark'
@@ -25,7 +25,13 @@ export default function CompositeChart({ series }) {
         <button type="button" onClick={() => setBreakdown((b) => !b)}>{breakdown ? 'Composite only' : 'Per-module'}</button>
       </div>
       <ResponsiveContainer width="100%" height={240}>
-        <LineChart data={data} margin={{ left: -20, bottom: 4 }}>
+        <ComposedChart data={data} margin={{ left: -20, bottom: 4 }}>
+          <defs>
+            <linearGradient id="compositeFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={colors[0]} stopOpacity={0.32} />
+              <stop offset="100%" stopColor={colors[0]} stopOpacity={0} />
+            </linearGradient>
+          </defs>
           <CartesianGrid strokeDasharray="none" stroke={text.grid} vertical={false} />
           <XAxis dataKey="label" tick={{ fontSize: 11, fill: text.muted }} axisLine={{ stroke: text.grid }} tickLine={false} />
           <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: text.muted }} axisLine={{ stroke: text.grid }} tickLine={false} />
@@ -35,8 +41,8 @@ export default function CompositeChart({ series }) {
             ? BREAKDOWN.map((s, i) => (
                 <Line key={s.key} type="monotone" dataKey={s.key} name={s.label} stroke={colors[i]} dot={false} connectNulls strokeWidth={2} />
               ))
-            : <Line type="monotone" dataKey="composite" name="Composite" stroke={colors[0]} dot={false} connectNulls strokeWidth={2} />}
-        </LineChart>
+            : <Area type="monotone" dataKey="composite" name="Composite" stroke={colors[0]} strokeWidth={2} fill="url(#compositeFill)" dot={false} connectNulls />}
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   )

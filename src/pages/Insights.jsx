@@ -145,6 +145,9 @@ export default function Insights() {
           <p className="muted">No untested correlation strong enough to recommend yet.</p>
         ) : (
           <>
+            {recommendation.caution && (
+              <span className="badge negative" style={{ marginBottom: 8, display: 'inline-block' }}>Read carefully — unusual direction</span>
+            )}
             <p style={{ marginBottom: 6 }}>{recommendation.hypothesis}</p>
             <p className="muted" style={{ marginBottom: 12 }}>
               <strong>How to test it:</strong> {recommendation.action} Then check back after {recommendation.target_days} days

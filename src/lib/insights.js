@@ -120,14 +120,23 @@ export function getWeeklyRecommendation(correlationCards, experiments) {
   const candidate = correlationCards.find((c) => !testedVars.has(c.input))
   if (!candidate) return null
   const inputLabel = INPUT_VARS.find((v) => v.key === candidate.input)?.label || candidate.input.replace(/_/g, ' ')
-  const outputLabel = OUTPUT_VARS.find((v) => v.key === candidate.output)?.label || candidate.output.replace(/_/g, ' ')
-  const guidance = guidanceFor(candidate.input)
+  const outputVar = OUTPUT_VARS.find((v) => v.key === candidate.output)
+  const outputLabel = outputVar?.label || candidate.output.replace(/_/g, ' ')
+  // The direction to actually push the input is the correlation's sign
+  // combined with which way the output is supposed to go — e.g. for a
+  // lower-is-better output like fog, a positive r means you'd want to
+  // DEcrease the input, not increase it.
+  const outputWantsHigher = outputVar?.higherIsBetter ?? true
+  const sameDirection = candidate.r > 0
+  const inputDirection = sameDirection === outputWantsHigher ? 'higher' : 'lower'
+  const guidance = guidanceFor(candidate.input, inputDirection)
   return {
     variable_changed: candidate.input,
     target_output: candidate.output,
     target_days: guidance.days,
     action: guidance.action,
-    hypothesis: `Changing ${inputLabel.toLowerCase()} will shift ${outputLabel.toLowerCase()} (based on r=${candidate.r.toFixed(2)}, n=${candidate.n}).`,
+    caution: guidance.caution || false,
+    hypothesis: `${inputDirection === 'higher' ? 'Increasing' : 'Decreasing'} ${inputLabel.toLowerCase()} looks likely to move ${outputLabel.toLowerCase()} toward its better range (based on r=${candidate.r.toFixed(2)}, n=${candidate.n}).`,
     sourceCard: candidate,
   }
 }

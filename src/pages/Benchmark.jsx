@@ -1,20 +1,23 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useLiveQuery } from 'dexie-react-hooks'
 import SequenceRecall from '../components/benchmark/SequenceRecall'
 import ReactionTest from '../components/benchmark/ReactionTest'
 import SymbolSprint from '../components/benchmark/SymbolSprint'
+import TodayResultsChart from '../components/benchmark/TodayResultsChart'
 import ChipGroup from '../components/ui/ChipGroup'
 import { todayStr } from '../lib/dates'
-import { addBenchmarkRun } from '../db/db'
+import { db, addBenchmarkRun } from '../db/db'
 import { spanToScore, rtToScore, sprintToScore, compositeScore } from '../lib/scoring'
 
-const CONTEXTS = ['scheduled', 'foggy', 'sharp']
+const CONTEXTS = ['scheduled', 'foggy', 'neutral', 'sharp']
 
 export default function Benchmark() {
   const navigate = useNavigate()
   const [step, setStep] = useState('intro')
   const [context, setContext] = useState('scheduled')
   const [results, setResults] = useState({})
+  const todayRuns = useLiveQuery(() => db.benchmark_runs.where('date').equals(todayStr()).toArray(), [])
 
   async function handleSpanComplete({ span }) {
     setResults((r) => ({ ...r, span }))
@@ -66,6 +69,8 @@ export default function Benchmark() {
         </div>
       )}
 
+      {step === 'intro' && <TodayResultsChart runs={todayRuns} />}
+
       {step === 'span' && (
         <div className="card">
           <h3>1. Sequence recall</h3>
@@ -113,6 +118,8 @@ export default function Benchmark() {
           </button>
         </div>
       )}
+
+      {step === 'results' && <TodayResultsChart runs={todayRuns} />}
     </div>
   )
 }

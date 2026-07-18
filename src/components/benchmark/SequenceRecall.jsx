@@ -115,7 +115,11 @@ export default function SequenceRecall({ onComplete }) {
               disabled={phase !== 'input'}
               style={{
                 aspectRatio: '1',
-                background: isLit ? 'var(--cobalt)' : isWrong ? 'var(--danger)' : 'var(--surface)',
+                borderRadius: 'var(--radius-sm)',
+                border: `2px solid ${isLit ? 'var(--cobalt)' : isWrong ? 'var(--danger)' : 'var(--border)'}`,
+                background: isLit ? 'var(--cobalt)' : isWrong ? 'var(--danger)' : 'var(--surface-2)',
+                boxShadow: isLit || isWrong ? 'var(--shadow-md)' : 'none',
+                transition: 'background 80ms ease, box-shadow 80ms ease',
               }}
             />
           )

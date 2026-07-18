@@ -7,13 +7,6 @@ import { lerpColor } from '../../lib/color'
 
 const MIN_N = 10
 
-function textOn(hex) {
-  const n = parseInt(hex.replace('#', ''), 16)
-  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-  return luminance > 0.6 ? '#0b0b0b' : '#ffffff'
-}
-
 export default function CorrelationHeatmap({ series }) {
   const [lag, setLag] = useState(0)
   const [tableView, setTableView] = useState(false)
@@ -41,12 +34,23 @@ export default function CorrelationHeatmap({ series }) {
     return lerpColor(mid, r >= 0 ? pos : neg, t)
   }
 
+  // Bubble diameter scales with |r| — strength is legible at a glance instead
+  // of only from the printed number, matching the diverging color for sign.
+  function radiusFor(r) {
+    if (r === null || r === undefined) return 3
+    return 4 + Math.min(Math.abs(r), 1) * 13
+  }
+
   return (
     <div className="card">
       <div className="field-row">
-        <h3>Lag correlations</h3>
-        <button type="button" onClick={() => setTableView((v) => !v)}>{tableView ? 'Grid' : 'Table'}</button>
+        <h3>How everything relates</h3>
+        <button type="button" onClick={() => setTableView((v) => !v)}>{tableView ? 'Bubbles' : 'Table'}</button>
       </div>
+      <p className="muted" style={{ marginTop: -6, marginBottom: 10 }}>
+        Every input crossed against every output, in one view. Bigger, more saturated bubbles are stronger
+        relationships; blue moves together, red moves opposite; faint dashed circles mean too little data yet.
+      </p>
       <div className="chip-group" style={{ marginBottom: 10 }}>
         {[0, 1].map((l) => (
           <div key={l} className={`chip${lag === l ? ' selected' : ''}`} role="button" tabIndex={0} onClick={() => setLag(l)}>
@@ -62,7 +66,7 @@ export default function CorrelationHeatmap({ series }) {
               <tr>
                 <th style={{ textAlign: 'left', padding: 4, color: text.secondary }}></th>
                 {OUTPUT_VARS.map((o) => (
-                  <th key={o.key} style={{ padding: 4, fontWeight: 600, color: text.secondary, minWidth: 56 }}>{o.label}</th>
+                  <th key={o.key} style={{ padding: 4, fontWeight: 600, color: text.secondary, minWidth: 48 }}>{o.label}</th>
                 ))}
               </tr>
             </thead>
@@ -73,22 +77,31 @@ export default function CorrelationHeatmap({ series }) {
                   {OUTPUT_VARS.map((output) => {
                     const { r, n } = cells[`${input.key}__${output.key}`]
                     const insufficient = n < MIN_N
-                    const bg = insufficient ? text.grid : cellColor(r)
-                    const fg = insufficient ? text.muted : textOn(bg)
+                    const color = insufficient ? text.grid : cellColor(r)
+                    const glossId = `glow-${input.key}-${output.key}-${lag}`
+                    const radius = insufficient ? 3 : radiusFor(r)
                     return (
                       <td
                         key={output.key}
                         title={`${input.label} → ${output.label}, lag ${lag}: r=${r === null ? '—' : r.toFixed(2)}, n=${n}`}
-                        style={{
-                          padding: '6px 4px',
-                          textAlign: 'center',
-                          background: bg,
-                          color: fg,
-                          border: `1px solid ${text.grid}`,
-                        }}
+                        style={{ padding: '2px', textAlign: 'center', borderBottom: `1px solid ${text.grid}` }}
                       >
-                        <div className="mono" style={{ fontWeight: 700 }}>{r === null ? '—' : r.toFixed(2)}</div>
-                        <div style={{ fontSize: 9, opacity: 0.85 }}>n={n}</div>
+                        <svg width={40} height={40} style={{ display: 'block', margin: '0 auto' }}>
+                          <defs>
+                            <radialGradient id={glossId} cx="35%" cy="30%" r="70%">
+                              <stop offset="0%" stopColor={lerpColor(color, '#ffffff', 0.45)} />
+                              <stop offset="100%" stopColor={color} />
+                            </radialGradient>
+                          </defs>
+                          {insufficient ? (
+                            <circle cx={20} cy={20} r={radius} fill="none" stroke={text.muted} strokeWidth={1.3} strokeDasharray="2 2" />
+                          ) : (
+                            <circle cx={20} cy={20} r={radius} fill={`url(#${glossId})`} stroke={text.grid} strokeWidth={1} />
+                          )}
+                        </svg>
+                        <div className="mono" style={{ fontSize: 9, color: insufficient ? text.muted : text.secondary }}>
+                          {r === null ? '—' : r.toFixed(2)}
+                        </div>
                       </td>
                     )
                   })}
@@ -126,9 +139,7 @@ export default function CorrelationHeatmap({ series }) {
           </table>
         </div>
       )}
-      <p className="muted" style={{ marginTop: 8 }}>
-        Blue = positive, red = negative, gray = ~0 or insufficient data (n&lt;{MIN_N}). Correlation, not causation.
-      </p>
+      <p className="muted" style={{ marginTop: 8 }}>Correlation, not causation.</p>
     </div>
   )
 }
